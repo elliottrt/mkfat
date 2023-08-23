@@ -58,6 +58,8 @@ FATReserved::FATReserved(const std::string &bootSectorPath,
 			exit(1);
 		}
 
+		this->bootSector.totalSectors32 = DISK_SIZE_32;
+
 		uint32_t tmp1 = DISK_SIZE_32 - this->reservedSectors;
 		uint32_t tmp2 = (256 * this->bootSector.sectorsPerCluster) + this->bootSector.fatCount;
 		tmp2 /= 2;
@@ -95,6 +97,9 @@ FATReserved::FATReserved(const std::string &bootSectorPath,
 			fprintf(stderr, "Amount of reserved sectors (%lu) exceeds disk space (%i)\n", this->reservedSectors, DISK_SIZE_16);
 			exit(1);
 		}
+
+		this->bootSector.totalSectors16 = DISK_SIZE_16;
+
 		uint32_t rootDirectorySectors = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + (this->bootSector.bytesPerSector - 1)) / this->bootSector.bytesPerSector;
 		uint32_t tmp1 = DISK_SIZE_16 - (this->reservedSectors + rootDirectorySectors);
 		uint32_t tmp2 = (256 * this->bootSector.sectorsPerCluster) + this->bootSector.fatCount;
@@ -113,21 +118,6 @@ FATReserved::FATReserved(const std::string &bootSectorPath,
 		}
 
 		uint32_t clusterCount = dataSectorCount / this->bootSector.sectorsPerCluster;
-
-		size_t firstFAT = this->reservedSectors;
-		printf("first FAT: %lu\n", firstFAT);
-
-		firstFAT += this->bootSector.fatSize16;
-		printf("second FAT: %lu\n", firstFAT);
-
-		size_t firstRootDirSector = this->reservedSectors + (this->bootSector.fatCount * this->bootSector.fatSize16);
-		printf("first root directory sector: %lu\n", firstRootDirSector);
-
-		size_t rootDirSectors = (this->bootSector.rootEntryCount * sizeof(struct direntry)) / this->bootSector.bytesPerSector;
-		printf("root directory size: %lu\n", rootDirSectors);
-
-		size_t firstDataSector = this->reservedSectors + (this->bootSector.fatCount * this->bootSector.fatSize16) + rootDirectorySectors;
-		printf("first data sector: %lu\n", firstDataSector);
 
 
 		if (clusterCount < 4085)
