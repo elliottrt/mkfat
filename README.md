@@ -1,7 +1,7 @@
 # mkfat
 A basic MS-DOS disk image formatter
 
-Currently supports FAT16 and FAT32
+Supports FAT12, FAT16, and FAT32
 
 Yes, I know it's badly made
 
