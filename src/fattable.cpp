@@ -7,10 +7,90 @@
 #define CLN_SHUT_BYTE 0x80
 #define HRD_ERR_BYTE 0x40
 
+// TODO: make rootEntryClusters a boolean to of whether the current dir is the root
+void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
+{
+	size_t itemSize;
+	if (item->directory())
+		itemSize = item->children.size() * sizeof(struct direntry);
+	else
+		itemSize = item->direntry.fileSize;
+
+	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
+	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
+
+	entryCount--; // remove EOC, we'll do that manually
+
+	// if we don't write anything, don't print anything
+	if (entryCount >= 0 && rootEntryClusters == 0) 
+	{
+		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
+		printf("entry size: %lu\n", entryCount + 1);
+	}
+
+	if (itemSize == 0) 
+		return;
+
+	if (rootEntryClusters == 0)
+	{
+		item->direntry.firstClusterLo = *cluster & 0x0FFF;
+		item->direntry.firstClusterHi = 0;
+
+		if (item->dot && item->dotdot && item->parent)
+		{
+			item->dot->direntry.firstClusterLo = item->direntry.firstClusterLo;
+			item->dot->direntry.firstClusterHi = 0;
+			item->dotdot->direntry.firstClusterLo = item->parent->direntry.firstClusterLo;
+			item->dotdot->direntry.firstClusterHi = 0;
+		}
+
+		if (item->dotdot && item->parent && !item->parent->parent)
+		{
+			item->dotdot->direntry.firstClusterLo = 0;
+			item->dotdot->direntry.firstClusterHi = 0;
+		}
+
+		while (entryCount--)
+		{
+			*cluster = *cluster + 1;
+			FATEntry12(*cluster);
+		}
+
+		FATEntry12(ENDCLUSTER12);
+		*cluster = *cluster + 1;
+	}
+
+	if (!item->directory()) return;
+
+	for (TreeItem *child : item->children)
+	{
+		_FATEntry_write12(child, cluster, bytesPerCluster, 0);
+	}
+
+}
+
 void FATTable::write12(FATDiskImage *image) const
 {
-	fprintf(stderr, "FATTable::write12 not implemented\n");
-	exit(1);
+	FATEntryDiskImage(image);
+	for (size_t fat = 0; fat < this->bootSector->fatCount; fat++)
+	{
+		FATEntryResetCount();
+		FATEntry12(this->bootSector->mediaDescriptor, 0xFF);
+		FATEntry12(0xFF, 0xFF);
+
+		uint32_t cluster = FATEntryGetCount();
+		size_t bytesPerCluster = this->bootSector->bytesPerSector * this->bootSector->sectorsPerCluster;
+		size_t rootEntryClusters = ((this->bootSector->rootEntryCount * sizeof(struct direntry)) + 
+									(bytesPerCluster - 1)) / bytesPerCluster;
+		_FATEntry_write12(this->tree->root, &cluster, bytesPerCluster, rootEntryClusters);
+
+		FATEntry12Flush();
+
+		size_t bytesWritten = (FATEntryGetCount() * 3) / 2;
+		size_t bytesLeft = this->bootSector->fatSize16 * this->bootSector->bytesPerSector - bytesWritten;
+
+		image->writeImgFileZeros(bytesLeft);
+	}
 }
 
 void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
@@ -21,14 +101,16 @@ void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 	else
 		itemSize = item->direntry.fileSize;
 
-	printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
-
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
-	size_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
+	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
 
 	entryCount--; // remove EOC, we'll do that manually
 
-	printf("entry size: %lu\n", entryCount + 1);
+	if (entryCount >= 0) 
+	{
+		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
+		printf("entry size: %lu\n", entryCount + 1);
+	}
 
 	if (itemSize == 0) 
 		return;
@@ -101,13 +183,15 @@ void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 	else
 		itemSize = item->direntry.fileSize;
 
-	printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
-
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
-	size_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
+	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
 	entryCount--; // remove EOC, we'll do that manually
 
-	printf("entry size: %lu\n", entryCount + 1);
+	if (entryCount >= 0) 
+	{
+		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
+		printf("entry size: %lu\n", entryCount + 1);
+	}
 
 	if (itemSize == 0) 
 		return;

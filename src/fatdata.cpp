@@ -4,7 +4,7 @@ void FATData::writeDirectory(TreeItem *item, FATDiskImage *image, size_t occupie
 {
 	printf("Writing directory '%.8s' with %lu entries\n", item->direntry.fileName, item->children.size());
 
-	// since vector items are contiguous? in memory, maybe try doing a single write
+	// TODO: since vector items are contiguous? in memory, maybe try doing a single write
 	for (TreeItem *child : item->children)
 	{
 		image->writeImgFile(&child->direntry, sizeof(struct direntry));
@@ -46,7 +46,7 @@ void FATData::writeFile(TreeItem *item, FATDiskImage *image, size_t occupiedByte
 	image->writeImgFileZeros(bytesLeft);
 }
 
-void FATData::write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootClusters) const
+void FATData::write12Recursive(TreeItem *item, FATDiskImage *image, size_t rootSectors) const
 {
 	size_t itemSize;
 	if (item->directory())
@@ -59,8 +59,36 @@ void FATData::write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootC
 
 	size_t occupiedBytes = this->bytesPerCluster * clusterCount;
 
-	if (rootClusters != 0)
-		occupiedBytes = rootClusters * this->bytesPerCluster;
+	if (rootSectors != 0)
+		occupiedBytes = rootSectors * this->bootSector->bytesPerSector;
+
+	if (item->directory())
+		this->writeDirectory(item, image, occupiedBytes);
+	else
+		this->writeFile(item, image, occupiedBytes);
+
+	for (TreeItem *child : item->children)
+	{
+		this->write12Recursive(child, image, 0);
+	}
+
+}
+
+void FATData::write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootSectors) const
+{
+	size_t itemSize;
+	if (item->directory())
+		itemSize = item->children.size() * sizeof(struct direntry);
+	else
+		itemSize = item->direntry.fileSize;
+	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
+
+	if (itemSize == 0) return;
+
+	size_t occupiedBytes = this->bytesPerCluster * clusterCount;
+
+	if (rootSectors != 0)
+		occupiedBytes = rootSectors * this->bootSector->bytesPerSector;
 
 	if (item->directory())
 		this->writeDirectory(item, image, occupiedBytes);
@@ -98,16 +126,17 @@ void FATData::write32Recursive(TreeItem *item, FATDiskImage *image) const
 
 void FATData::write12(FATDiskImage *image) const
 {
-	fprintf(stderr, "FATData::write12 not implemented\n");
-	exit(1);
+	size_t rootSectors = this->bootSector->rootEntryCount * sizeof(struct direntry);
+	rootSectors = (rootSectors + this->bootSector->bytesPerSector - 1) / this->bootSector->bytesPerSector;
+	this->write12Recursive(this->tree->root, image, rootSectors);
+	this->padZeros(image, DISK_SIZE_12);
 }
 
 void FATData::write16(FATDiskImage *image) const
 {
-	size_t rootClusters = this->bootSector->rootEntryCount * sizeof(struct direntry);
-	rootClusters = (rootClusters + this->bootSector->bytesPerSector - 1) / this->bootSector->bytesPerSector;
-	rootClusters = (rootClusters + this->bootSector->sectorsPerCluster - 1) / this->bootSector->sectorsPerCluster;
-	this->write16Recursive(this->tree->root, image, rootClusters);
+	size_t rootSectors = this->bootSector->rootEntryCount * sizeof(struct direntry);
+	rootSectors = (rootSectors + this->bootSector->bytesPerSector - 1) / this->bootSector->bytesPerSector;
+	this->write16Recursive(this->tree->root, image, rootSectors);
 	this->padZeros(image, DISK_SIZE_16);
 }
 

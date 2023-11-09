@@ -22,7 +22,7 @@
 #define TOTAL_SECTORS_32 DISK_SIZE_32
 #define DISK_SIZE_16 49152 // or maybe 0xFFFF
 #define TOTAL_SECTORS_16 DISK_SIZE_16
-#define DISK_SIZE_12 32768
+#define DISK_SIZE_12 2880
 #define TOTAL_SECTORS_12 DISK_SIZE_12
 
 #define min(a, b) ((a) > (b) ? (b) : (a))
@@ -62,6 +62,6 @@ struct direntry
 } __attribute__ ((packed));
 
 void fileRead(FILE *file, void *out, size_t size);
-size_t fileSize(FILE *f);
+size_t fileSize(FILE *file);
 
 #endif

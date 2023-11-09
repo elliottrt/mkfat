@@ -25,6 +25,11 @@ void FATEntry16(uint8_t b0, uint8_t b1);
 void FATEntry16(uint16_t entry);
 enum FATEntryType FATEntryType16(uint16_t value);
 
+void FATEntry12(uint8_t b0, uint8_t b1);
+void FATEntry12(uint16_t entry);
+void FATEntry12Flush(void);
+enum FATEntryType FATEntryType12(uint16_t value);
+
 void FATEntryDiskImage(FATDiskImage *image);
 
 size_t FATEntryGetCount();

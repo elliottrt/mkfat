@@ -17,6 +17,7 @@ public:
 	void writeDirectory(TreeItem *item, FATDiskImage *image, size_t occupiedBytes) const;
 	void writeFile(TreeItem *item, FATDiskImage *image, size_t occupiedBytes) const;
 
+	void write12Recursive(TreeItem *item, FATDiskImage *image, size_t rootEntries) const;
 	void write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootEntries) const;
 	void write32Recursive(TreeItem *item, FATDiskImage *image) const;
 

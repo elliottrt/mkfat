@@ -112,6 +112,8 @@ void FATBootSector::defaultBootSector12(const std::string &volumeLabel)
 	this->totalSectors16 = DISK_SIZE_12 & 0xFFFF;
 	this->totalSectors32 = 0;
 	this->sectorsPerCluster = 2;
+	this->biosParamBlock.fat1216.driveNumber = DRIVE_NUM;
+	this->biosParamBlock.fat1216.bootSignature = BOOT_SIGNATURE;
 	strncpy(this->biosParamBlock.fat32.volumeLabel, volumeLabel.c_str(), 11);
 	strncpy(this->biosParamBlock.fat1216.fileSystemType, "FAT12   ", 8);
 	memcpy(this->biosParamBlock.fat1216.bootCode, defaultBootCode, sizeof(defaultBootCode));

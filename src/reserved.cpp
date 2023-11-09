@@ -133,8 +133,42 @@ FATReserved::FATReserved(const std::string &bootSectorPath,
 	}
 	else
 	{
-		fprintf(stderr, "FATReserved::FATReserved calculations not yet implemented for FAT12\n");
-		exit(1);
+		int32_t reservedDiff = this->reservedSectors - 1;
+		int32_t spaceForFAT = DISK_SIZE_12 - reservedDiff;
+		if (spaceForFAT <= 0)
+		{
+			fprintf(stderr, "Amount of reserved sectors (%lu) exceeds disk space (%i)\n", this->reservedSectors, DISK_SIZE_16);
+			exit(1);
+		}
+
+		this->bootSector.totalSectors16 = DISK_SIZE_12;
+
+		uint32_t rootDirectorySectors = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + (this->bootSector.bytesPerSector - 1)) / this->bootSector.bytesPerSector;
+
+		uint32_t dataSectorCount = this->bootSector.totalSectors16 - 
+						   (rootDirectorySectors + 
+						   	this->reservedSectors + 
+						   	this->bootSector.fatCount * this->bootSector.fatSize16);
+
+		if (this->bootSector.sectorsPerCluster == 0)
+		{
+			fprintf(stderr, "Disk too small (%i).\n", DISK_SIZE_12);
+			exit(1);
+		}
+
+		uint32_t clusterCount = dataSectorCount / this->bootSector.sectorsPerCluster;
+
+		if (clusterCount >= 4085)
+		{
+			fprintf(stderr, "Cluster count too large (%u), drive should be FAT16\n", clusterCount);
+			exit(1);
+		}
+		else if (clusterCount >= 65525)
+		{
+			fprintf(stderr, "Cluster count too large (%u), drive should be FAT32\n", clusterCount);
+			exit(1);
+		}
+
 	}
 
 }
