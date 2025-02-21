@@ -10,31 +10,21 @@ FileTree::FileTree(const std::string &path, const std::string &volumeLabel)
 	}
 	else
 	{
-		char last = path.at(path.length() - 1);
-		std::string rootPath = path;
-		if (last == '/')
-			rootPath.erase(path.length() - 1);
-		this->path = std::filesystem::path(rootPath);
-
+		this->path = std::filesystem::path(path);
 		this->root = new TreeItem(NULL, std::filesystem::directory_entry(this->path));
 	}
 
 	TreeItem *volumeLabelItem = new TreeItem(this->root, volumeLabel, false);
+	// TODO: replace magic number 11 here and other places
 	formatFATName(volumeLabel.c_str(), volumeLabelItem->direntry.fileName, 11);
 	volumeLabelItem->direntry.attributes |= VOLUME_ID;
 	volumeLabelItem->direntry.attributes |= SYSTEM;
 	this->root->children.push_back(volumeLabelItem);
 }
 
-FileTree::FileTree(const std::string &volumeLabel)
+FileTree::FileTree(const std::string &volumeLabel): FileTree("", volumeLabel)
 {
-	this->root = new TreeItem(NULL, "root", true);
 
-	TreeItem *volumeLabelItem = new TreeItem(this->root, volumeLabel, false);
-	formatFATName(volumeLabel.c_str(), volumeLabelItem->direntry.fileName, 11);
-	volumeLabelItem->direntry.attributes |= VOLUME_ID;
-	volumeLabelItem->direntry.attributes |= SYSTEM;
-	this->root->children.push_back(volumeLabelItem);
 }
 
 FileTree::~FileTree(void) {
@@ -46,6 +36,6 @@ FileTree::~FileTree(void) {
 void FileTree::collect(void)
 {
 	if (this->root && !this->root->artificial)
-		this->root->findChildren(std::filesystem::directory_entry(this->path));
+		this->root->findChildren();
 }
 

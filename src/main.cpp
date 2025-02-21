@@ -71,6 +71,8 @@ int main(int argc, const char **argv)
 
 	// TODO: namespace
 
+	// TODO: after collecting FileTree, do a duplicate file check - two files in the same dir shouldn't have the same name
+
 	// get command line arguments
 
 	FatType fatType = fatTypeOrFail(argv[1]);

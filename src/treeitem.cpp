@@ -3,15 +3,14 @@
 
 #include <sys/stat.h>
 
-TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entry &entry): parent(parent)
+TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entry &entry):
+	realPath(entry.path()), parent(parent), artificial(false)
 {
-	
-	this->artificial = false;
 
 	if (entry.is_directory())
 		this->direntry.attributes |= DIRECTORY;
 
-	this->name = this->is_directory() ? entry.path().stem() : entry.path().filename();
+	this->name = this->is_directory() ? realPath.stem() : realPath.filename();
 
 	if (!entry.exists())
 	{
@@ -29,7 +28,11 @@ TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entr
 
 	struct stat sbuf;
 	struct tm access, modify;
-	stat(entry.path().c_str(), &sbuf);
+	
+	if (stat(realPath.c_str(), &sbuf) != 0)
+	{
+		mkfatError(1, "unable to stat '%s': %s\n", realPath.c_str(), strerror(errno));
+	}
 	
 	gmtime_r(&sbuf.st_atime, &access);
 	gmtime_r(&sbuf.st_mtime, &modify);
@@ -58,11 +61,10 @@ TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entr
 	this->direntry.creationDate = 0;
 }
 
-TreeItem::TreeItem(const TreeItem *parent, const std::string &name, bool isDirectory): parent(parent)
+TreeItem::TreeItem(const TreeItem *parent, const std::string &name, bool isDirectory): 
+	name(name), parent(parent), artificial(true)
 {
-	this->name = name;
 	this->direntry.setFileName(name.c_str());
-	this->artificial = true;
 	this->direntry.fileSize = 0;
 
 	if (isDirectory)
@@ -70,7 +72,6 @@ TreeItem::TreeItem(const TreeItem *parent, const std::string &name, bool isDirec
 		this->direntry.attributes |= DIRECTORY;
 		this->createDots();
 	}
-		
 }
 
 TreeItem::~TreeItem(void) {
@@ -105,9 +106,9 @@ void TreeItem::createDots(void)
 
 }
 
-void TreeItem::findChildren(const std::filesystem::directory_entry &entry)
+void TreeItem::findChildren(void)
 {
-	for (const auto &childEntry : std::filesystem::directory_iterator(entry.path())) 
+	for (const auto &childEntry : std::filesystem::directory_iterator(realPath)) 
 	{
 		// we want to skip hidden files, which begin with a .
 		std::string filename = childEntry.path().filename().string();
@@ -117,25 +118,13 @@ void TreeItem::findChildren(const std::filesystem::directory_entry &entry)
 		}
 
 		TreeItem *child = new TreeItem(this, childEntry);
-		if (child->is_directory()) 
+		if (child->is_directory())
 		{
 			child->createDots();
-			child->findChildren(childEntry);
+			child->findChildren();
 		}
         this->children.push_back(child);
 	}
-}
-
-std::string TreeItem::path(void) const
-{
-	std::string _path = this->name;
-	const TreeItem *ancestor = this->parent;
-	while (ancestor != NULL)
-	{
-		_path.insert(0, ancestor->name + "/");
-		ancestor = ancestor->parent;
-	}
-	return _path;
 }
 
 bool TreeItem::is_directory(void) const

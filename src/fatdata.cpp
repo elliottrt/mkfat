@@ -25,10 +25,10 @@ void FATData::writeFile(const TreeItem *item, FATDiskImage &image, size_t occupi
 
 	if (!fileData)
 	{
-		mkfatError(1, "unable to allocate memory for copying file '%s'\n", item->path().c_str());
+		mkfatError(1, "unable to allocate memory for copying file '%s'\n", item->realPath.c_str());
 	}
 
-	fileRead(item->path().c_str(), fileData, item->direntry.fileSize);
+	fileRead(item->realPath.c_str(), fileData, item->direntry.fileSize);
 
 	image.writeImgFile(fileData, item->direntry.fileSize);
 
