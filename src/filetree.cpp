@@ -1,22 +1,29 @@
 #include "filetree.h"
 #include "fatformat.h"
+#include "error.h"
 
 #include <sys/stat.h>
 
 TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entry &entry): parent(parent)
 {
-	if (!entry.is_regular_file() && !entry.is_directory())
-	{
-		fprintf(stderr, "File in directory is not supported; only directories and regular files are.\n");
-		exit(1);
-	}
-
+	
 	this->artificial = false;
 
 	if (entry.is_directory())
 		this->direntry.attributes |= DIRECTORY;
 
 	this->name = this->is_directory() ? entry.path().stem() : entry.path().filename();
+
+	if (!entry.exists())
+	{
+		mkfatError(1, "file or directory '%s' does not exist\n", name.c_str());
+	}
+
+	if (!entry.is_regular_file() && !entry.is_directory())
+	{
+		mkfatError(1, "'%s' is not a regular file or directory\n", name.c_str());
+	}
+
 	this->direntry.setFileName(this->name.c_str());
 
 	this->direntry.fileSize = this->is_directory() ? 0 : entry.file_size();
@@ -125,6 +132,13 @@ std::string TreeItem::path(void) const
 bool TreeItem::is_directory(void) const
 {
 	return (this->direntry.attributes & DIRECTORY) != 0;
+}
+
+size_t TreeItem::size(void) const {
+	if (is_directory())
+		return children.size() * sizeof(struct direntry);
+	else
+		return direntry.fileSize;
 }
 
 FileTree::FileTree(const std::string &path, const std::string &volumeLabel)

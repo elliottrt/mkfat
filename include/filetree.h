@@ -7,6 +7,8 @@
 
 #include "common.h"
 
+// TODO: separate TreeItem and FileTree into separate files
+
 struct TreeItem
 {
 	// TODO: does this have to be a pointer? or could it be just TreeItem
@@ -29,6 +31,8 @@ struct TreeItem
 
 	std::string path(void) const;
 	bool is_directory() const;
+
+	size_t size(void) const;
 
 };
 

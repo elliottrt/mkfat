@@ -1,5 +1,6 @@
 #include "fattable.h"
 #include "fatentry.h"
+#include "error.h"
 
 #define CLN_SHUT_BITMASK 0x8000000
 #define HRD_ERR_BITMAS 0x04000000
@@ -10,12 +11,7 @@
 // TODO: make rootEntryClusters a boolean to of whether the current dir is the root
 void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
 {
-	// TODO: this itemSize code is duplicated in many places, make a function in TreeItem instead
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -97,11 +93,7 @@ void FATTable::write12(FATDiskImage &image) const
 
 void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
 {
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -178,11 +170,7 @@ void FATTable::write16(FATDiskImage &image) const
 
 void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster)
 {
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -267,8 +255,5 @@ void FATTable::write(FATDiskImage &image) const
 	else if (this->fatType == "12")
 		this->write12(image);
 	else
-	{
-		fprintf(stderr, "Invalid fat type '%s', must be 12,16,32\n", this->fatType.c_str());
-		exit(1);
-	}
+		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", this->fatType.c_str());
 }

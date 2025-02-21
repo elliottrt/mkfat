@@ -1,10 +1,12 @@
 #include "fatdata.h"
+#include "error.h"
+
+#include <cstdlib>
 
 void FATData::writeDirectory(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const
 {
 	printf("Writing directory '%.8s' with %lu entries\n", item->direntry.fileName, item->children.size());
 
-	// TODO: since vector items are contiguous? in memory, maybe try doing a single write
 	for (TreeItem *child : item->children)
 	{
 		image.writeImgFile(&child->direntry, sizeof(struct direntry));
@@ -20,27 +22,17 @@ void FATData::writeFile(const TreeItem *item, FATDiskImage &image, size_t occupi
 	printf("Writing file '%.8s' '%.3s' of size %u\n", item->direntry.fileName, 
 			item->direntry.fileExtension,  item->direntry.fileSize);
 
-	FILE *fFile = fopen(item->path().c_str(), "rb");
-
-	if (!fFile)
-	{
-		fprintf(stderr, "Unable to open file '%s' to copy to disk image\n", item->path().c_str());
-		exit(1);
-	}
-
-	uint8_t *fileData = (uint8_t *) malloc(sizeof(uint8_t) * item->direntry.fileSize);
+	uint8_t *fileData = (uint8_t *) calloc(item->direntry.fileSize, sizeof(uint8_t));
 
 	if (!fileData)
 	{
-		fprintf(stderr, "Unable to allocate memory for copying file '%s'\n", item->path().c_str());
-		exit(1);
+		mkfatError(1, "unable to allocate memory for copying file '%s'\n", item->path().c_str());
 	}
 
-	fileRead(fFile, fileData, item->direntry.fileSize);
+	fileRead(item->path().c_str(), fileData, item->direntry.fileSize);
 
 	image.writeImgFile(fileData, item->direntry.fileSize);
 
-	fclose(fFile);
 	free(fileData);
 
 	ssize_t bytesLeft = occupiedBytes - item->direntry.fileSize;
@@ -49,11 +41,7 @@ void FATData::writeFile(const TreeItem *item, FATDiskImage &image, size_t occupi
 
 void FATData::write12Recursive(const TreeItem *item, FATDiskImage &image, size_t rootSectors) const
 {
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
@@ -77,11 +65,7 @@ void FATData::write12Recursive(const TreeItem *item, FATDiskImage &image, size_t
 
 void FATData::write16Recursive(const TreeItem *item, FATDiskImage &image, size_t rootSectors) const
 {
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
@@ -105,11 +89,7 @@ void FATData::write16Recursive(const TreeItem *item, FATDiskImage &image, size_t
 
 void FATData::write32Recursive(const TreeItem *item, FATDiskImage &image) const
 {
-	size_t itemSize;
-	if (item->is_directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
@@ -162,10 +142,7 @@ void FATData::write(FATDiskImage &image) const
 	else if (this->fatType == "12")
 		this->write12(image);
 	else
-	{
-		fprintf(stderr, "Invalid fat type '%s', must be 12,16,32\n", this->fatType.c_str());
-		exit(1);
-	}
+		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", this->fatType.c_str());
 }
 
 void FATData::padZeros(FATDiskImage &image, size_t diskSize) const

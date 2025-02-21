@@ -4,12 +4,13 @@
 #include "reserved.h"
 #include "fattable.h"
 #include "fatdata.h"
+#include "error.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 void usage(void)
 {
-	printf("Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel]\n");
+	fprintf(stderr, "Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel]\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -36,6 +37,15 @@ int main(int argc, char **argv)
 	if (argc < 3)
 		usage();
 
+	// TODO: testing - can use 'hdiutil attach <fs.img>' to attach and 'hdiutil detach <disk thing>' to mount and unmount
+	// TODO: 'hdiutil imageinfo /dev/<whatever>' and 'diskutil'
+
+	// TODO: make all of the output that mkfat generates an option which is disabled by default
+
+	// TODO: namespace
+
+	// TODO: use enumeration for fatType instead of string
+
 	std::string fatType = std::string(argv[1]);
 	std::string outputPath = std::string(argv[2]);
 
@@ -51,9 +61,7 @@ int main(int argc, char **argv)
 
 	if (fatType != "12" && fatType != "16" && fatType != "32")
 	{
-		// TODO: standardize errors -> make header for error messages
-		fprintf(stderr, "error: invalid fat type '%s', must be one of: 12, 16, 32\n", fatType.c_str());
-		exit(EXIT_FAILURE);
+		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", fatType.c_str());
 	}
 
 	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
@@ -65,6 +73,7 @@ int main(int argc, char **argv)
 	FATTable fatTable = FATTable(fileTree, fatReserved.bootSector, fatType);
 	FATData fatData = FATData(fileTree, fatReserved.bootSector, fatType);
 
+	// TODO: i don't like this, because it might leave a partially constructed file if there is an error
 	fatDiskImage.createImgFile();
 	fatReserved.write(fatDiskImage);
 	fatTable.write(fatDiskImage);

@@ -56,8 +56,6 @@ struct FATBootSector
 
 	uint8_t bootSignature[2];
 
-	void readFromFile(const std::string &bootPath);
-
 	void defaultBootSector12(const std::string &volumeLabel);
 	void defaultBootSector16(const std::string &volumeLabel);
 	void defaultBootSector32(const std::string &volumeLabel);

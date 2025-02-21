@@ -65,7 +65,7 @@ struct direntry
 	
 } __attribute__ ((packed));
 
-void fileRead(FILE *file, void *out, size_t size);
-size_t fileSize(FILE *file);
+void fileRead(const char *filename, void *out, size_t size);
+size_t fileSize(const char *filename);
 
 #endif
