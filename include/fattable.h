@@ -1,12 +1,12 @@
 #ifndef _MKFAT_FAT
 #define _MKFAT_FAT
 
-#include "writeable.h"
+#include "diskimage.h"
 #include "filetree.h"
 #include "bootsector.h"
 #include "fattype.h"
 
-class FATTable : public FATWriteable
+class FATTable
 {
 
 	const FileTree &tree;
@@ -21,7 +21,7 @@ public:
 
 	FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType);
 
-	void write(FATDiskImage &image) const override;
+	void write_to(FATDiskImage &image) const;
 
 };
 

@@ -244,7 +244,7 @@ FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, FatTyp
 
 }
 
-void FATTable::write(FATDiskImage &image) const
+void FATTable::write_to(FATDiskImage &image) const
 {
 	switch (this->fatType) {
 		case FatType::FAT12: write12(image); break;

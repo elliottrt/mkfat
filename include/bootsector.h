@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 
+#include "common.h"
 #include "fattype.h"
 
 struct FATBootSector
@@ -67,5 +68,7 @@ struct FATBootSector
 	FATBootSector(void) = default;
 
 } __attribute__ ((packed));
+
+static_assert(sizeof(FATBootSector) == DISK_SECTOR_SIZE, "FATBootSector must be the same size as a disk sector");
 
 #endif

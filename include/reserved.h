@@ -1,12 +1,12 @@
 #ifndef _MKFAT_RESERVED
 #define _MKFAT_RESERVED
 
-#include "writeable.h"
+#include "diskimage.h"
 #include "bootsector.h"
 #include "fsinfo.h"
 #include "fattype.h"
 
-class FATReserved : public FATWriteable
+class FATReserved
 {
 
 	void init12(void);
@@ -29,7 +29,7 @@ public:
 					   FatType fatType,
 					   const std::string &volumeLabel);
 
-	void write(FATDiskImage &image) const override;
+	void write_to(FATDiskImage &image) const;
 
 };
 

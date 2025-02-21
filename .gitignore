@@ -47,3 +47,6 @@ build/
 # IDE outputs
 .vscode/
 .cache/
+
+# FAT documentation
+fatgen103.pages

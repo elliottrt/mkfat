@@ -1,6 +1,9 @@
 #ifndef _MKFAT_FSINFO
 #define _MKFAT_FSINFO
 
+#include "common.h"
+#include <cstdint>
+
 struct FATFSInfo
 {
 
@@ -15,5 +18,7 @@ struct FATFSInfo
 	FATFSInfo(void) = default;
 
 } __attribute__ ((packed));
+
+static_assert(sizeof(FATFSInfo) == DISK_SECTOR_SIZE, "FATFSInfo must be the same size as a disk sector");
 
 #endif

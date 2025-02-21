@@ -1,5 +1,4 @@
 #include "diskimage.h"
-#include "writeable.h"
 #include "common.h"
 #include "error.h"
 

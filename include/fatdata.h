@@ -1,12 +1,12 @@
 #ifndef _MKFAT_FATDATA
 #define _MKFAT_FATDATA
 
-#include "writeable.h"
+#include "diskimage.h"
 #include "filetree.h"
 #include "bootsector.h"
 #include "fattype.h"
 
-class FATData : public FATWriteable
+class FATData
 {
 public:
 
@@ -28,7 +28,7 @@ public:
 
 	FATData(const FileTree &tree, const FATBootSector &bootSector, FatType fatType);
 
-	void write(FATDiskImage &image) const override;
+	void write_to(FATDiskImage &image) const;
 
 	void padZeros(FATDiskImage &image, size_t diskSize) const;
 

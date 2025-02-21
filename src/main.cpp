@@ -62,6 +62,8 @@ int main(int argc, char **argv)
 
 	// TODO: namespace
 
+	// get command line arguments
+
 	FatType fatType = fatTypeOrFail(argv[1]);
 	std::string outputPath = std::string(argv[2]);
 
@@ -69,6 +71,8 @@ int main(int argc, char **argv)
 	std::string fatBootSectorPath = findArgOrDefault(argc, argv, "-B", "");
 	std::string reservedPath = findArgOrDefault(argc, argv, "-R", "");
 	std::string volumeLabel = findArgOrDefault(argc, argv, "-V", VOLUMELABEL);
+
+	// initialize FAT data structures
 
 	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
 	FATDiskImage fatDiskImage = FATDiskImage(outputPath, fatReserved.bootSector.bytesPerSector);
@@ -79,11 +83,13 @@ int main(int argc, char **argv)
 	FATTable fatTable = FATTable(fileTree, fatReserved.bootSector, fatType);
 	FATData fatData = FATData(fileTree, fatReserved.bootSector, fatType);
 
+	// write out information to the file
+
 	// TODO: i don't like this, because it might leave a partially constructed file if there is an error
 	fatDiskImage.createImgFile();
-	fatReserved.write(fatDiskImage);
-	fatTable.write(fatDiskImage);
-	fatData.write(fatDiskImage);
+	fatReserved.write_to(fatDiskImage);
+	fatTable.write_to(fatDiskImage);
+	fatData.write_to(fatDiskImage);
 	fatDiskImage.closeImgFile();
 
 	return EXIT_SUCCESS;
