@@ -1,6 +1,8 @@
 #include "fattable.h"
 #include "fatentry.h"
+#include "fattype.h"
 #include "logging.h"
+#include <cstdio>
 
 #define CLN_SHUT_BITMASK 0x8000000
 #define HRD_ERR_BITMAS 0x04000000
@@ -54,7 +56,8 @@ void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 		*cluster = *cluster + 1;
 	}
 
-	if (item->is_directory()) {
+	if (item->is_directory())
+	{
 		for (TreeItem *child : item->children)
 			_FATEntry_write12(child, cluster, bytesPerCluster, 0);
 	}
@@ -64,7 +67,7 @@ void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 void FATTable::write12(FATDiskImage &image) const
 {
 	FATEntryDiskImage(image);
-	
+
 	for (size_t fat = 0; fat < this->bootSector.fatCount; fat++)
 	{
 		FATEntryResetCount();
@@ -81,6 +84,11 @@ void FATTable::write12(FATDiskImage &image) const
 		FATEntry12Flush();
 
 		size_t bytesWritten = (FATEntryGetCount() * 3) / 2;
+
+		if (bytesWritten > fatSizeBytes()) {
+			mkfatError(1, "FAT too large; takes up %zu bytes but only have %zu\n", bytesWritten, fatSizeBytes());
+		}
+
 		size_t bytesLeft = this->bootSector.fatSize16 * this->bootSector.bytesPerSector - bytesWritten;
 
 		image.writeImgFileZeros(bytesLeft);
@@ -130,7 +138,8 @@ void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 		*cluster = *cluster + 1;
 	}
 
-	if (item->is_directory()) {
+	if (item->is_directory())
+	{
 		for (TreeItem *child : item->children)
 			_FATEntry_write16(child, cluster, bytesPerCluster, 0);
 	}
@@ -154,6 +163,11 @@ void FATTable::write16(FATDiskImage &image) const
 		_FATEntry_write16(this->tree.root, &cluster, bytesPerCluster, rootEntryClusters);
 
 		size_t bytesWritten = FATEntryGetCount() * 2;
+
+		if (bytesWritten > fatSizeBytes()) {
+			mkfatError(1, "FAT too large; takes up %zu bytes but only have %zu\n", bytesWritten, fatSizeBytes());
+		}
+
 		size_t bytesLeft = this->bootSector.fatSize16 * this->bootSector.bytesPerSector - bytesWritten;
 
 		image.writeImgFileZeros(bytesLeft);
@@ -200,7 +214,8 @@ void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 	*cluster = *cluster + 1;
 
 	
-	if (item->is_directory()) {
+	if (item->is_directory())
+	{
 		for (TreeItem *child : item->children)
 			_FATEntry_write32(child, cluster, bytesPerCluster);
 	}
@@ -222,6 +237,11 @@ void FATTable::write32(FATDiskImage &image) const
 		_FATEntry_write32(this->tree.root, &cluster, bytesPerCluster);
 
 		size_t bytesWritten = FATEntryGetCount() * 4;
+
+		if (bytesWritten > fatSizeBytes()) {
+			mkfatError(1, "FAT too large; takes up %zu bytes but only have %zu\n", bytesWritten, fatSizeBytes());
+		}
+
 		size_t bytesLeft = this->bootSector.biosParamBlock.fat32.fatSize32 * this->bootSector.bytesPerSector - bytesWritten;
 
 		image.writeImgFileZeros(bytesLeft);
@@ -231,6 +251,21 @@ void FATTable::write32(FATDiskImage &image) const
 FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType):
 	tree(tree), fatType(fatType), bootSector(bootSector) {
 
+}
+
+size_t FATTable::fatSize(void) const {
+	if (fatType == FatType::FAT32) 
+	{
+		return bootSector.biosParamBlock.fat32.fatSize32;
+	} 
+	else 
+	{
+		return bootSector.fatSize16;
+	}
+}
+
+size_t FATTable::fatSizeBytes(void) const {
+	return fatSize() * bootSector.bytesPerSector;
 }
 
 void FATTable::write_to(FATDiskImage &image) const

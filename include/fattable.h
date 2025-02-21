@@ -21,6 +21,11 @@ public:
 
 	FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType);
 
+	// returns the size of the FAT in sectors
+	size_t fatSize(void) const;
+	// returns the size of the FAT in bytes
+	size_t fatSizeBytes(void) const;
+
 	void write_to(FATDiskImage &image) const;
 
 };
