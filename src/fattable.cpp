@@ -241,7 +241,7 @@ void FATTable::write32(FATDiskImage &image) const
 }
 
 FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, const std::string &fatType):
-	tree(tree), bootSector(bootSector), fatType(fatType) {
+	tree(tree), fatType(fatType), bootSector(bootSector) {
 
 }
 

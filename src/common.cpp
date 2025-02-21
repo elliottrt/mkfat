@@ -32,6 +32,10 @@ void direntry::setFileName(const char *name)
 
 	if (dotLocation)
 	{
+		// if there's a second . then this filename is bad and we don't want to deal with it
+		if (strchr(dotLocation + 1, '.'))
+			mkfatError(1, "bad filename '%s': contains multiple .\n", name);
+
 		formatFATName(dotLocation + 1, this->fileExtension, DIRENTRY_EXTLEN);
 		nameLength -= strlen(dotLocation);
 	}
@@ -41,14 +45,6 @@ void direntry::setFileName(const char *name)
 	}
 
 	formatFATName(name, this->fileName, min(DIRENTRY_NAMELEN, nameLength));
-	
-	/*
-	fputs("'", stdout);
-	fwrite(this->filename, 1, 8, stdout);
-	fputs("' '", stdout);
-	fwrite(this->fileext, 1, 3, stdout);
-	fputs("'\n", stdout);
-	*/
 }
 
 void fileRead(const char *filename, void *out, size_t size)
