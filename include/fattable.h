@@ -4,12 +4,13 @@
 #include "writeable.h"
 #include "filetree.h"
 #include "bootsector.h"
+#include "fattype.h"
 
 class FATTable : public FATWriteable
 {
 
 	const FileTree &tree;
-	std::string fatType;
+	const FatType fatType;
 	const FATBootSector &bootSector;
 
 	void write12(FATDiskImage &image) const;
@@ -18,7 +19,7 @@ class FATTable : public FATWriteable
 
 public:
 
-	FATTable(const FileTree &tree, const FATBootSector &bootSector, const std::string &fatType);
+	FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType);
 
 	void write(FATDiskImage &image) const override;
 

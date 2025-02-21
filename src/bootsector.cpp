@@ -1,7 +1,7 @@
 #include "bootsector.h"
 #include "common.h"
 #include "fatformat.h"
-#include "error.h"
+#include "fattype.h"
 
 #include <cstdio>
 
@@ -211,15 +211,16 @@ void FATBootSector::bootSectorCommon(void)
 	this->hiddenSectors = 0;
 }
 
-FATBootSector::FATBootSector(const std::string &bootPath, const std::string &volumeLabel, const std::string &fatType)
+FATBootSector::FATBootSector(const std::string &bootPath, const std::string &volumeLabel, FatType fatType)
 {
 	memset(this, 0, sizeof(struct FATBootSector));
 
 	if (bootPath != "")
 		fileRead(bootPath.c_str(), this, DISK_SECTOR_SIZE);
-	else if (fatType == "32")
+
+	else if (fatType == FatType::FAT32)
 		this->defaultBootSector32(volumeLabel);
-	else if (fatType == "16")
+	else if (fatType == FatType::FAT16)
 		this->defaultBootSector16(volumeLabel);
 	else
 		this->defaultBootSector12(volumeLabel);

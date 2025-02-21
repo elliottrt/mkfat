@@ -1,5 +1,6 @@
 #include "fatdata.h"
 #include "error.h"
+#include "fattype.h"
 
 #include <cstdlib>
 
@@ -127,7 +128,7 @@ void FATData::write32(FATDiskImage &image) const
 	this->padZeros(image, DISK_SIZE_32);
 }
 
-FATData::FATData(const FileTree &tree, const FATBootSector &bootSector, const std::string &fatType): 
+FATData::FATData(const FileTree &tree, const FATBootSector &bootSector, FatType fatType): 
 	tree(tree), bootSector(bootSector), fatType(fatType) {
 
 	this->bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
@@ -135,14 +136,11 @@ FATData::FATData(const FileTree &tree, const FATBootSector &bootSector, const st
 
 void FATData::write(FATDiskImage &image) const
 {
-	if (this->fatType == "32")
-		this->write32(image);
-	else if (this->fatType == "16")
-		this->write16(image);
-	else if (this->fatType == "12")
-		this->write12(image);
-	else
-		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", this->fatType.c_str());
+	switch (this->fatType) {
+		case FatType::FAT12: write12(image); break;
+		case FatType::FAT16: write16(image); break;
+		case FatType::FAT32: write32(image); break;
+	}
 }
 
 void FATData::padZeros(FATDiskImage &image, size_t diskSize) const

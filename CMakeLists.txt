@@ -4,6 +4,9 @@ project(mkfat VERSION 1.0.0
 		DESCRIPTION "a basic MS-DOS disk image formatter"
 		LANGUAGES CXX)
 
+# generate compile_commands.json for IDE integration
+add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=1)
+
 file(GLOB mkfat_source src/*.cpp)
 file(GLOB mkfat_include include/*.h)
 

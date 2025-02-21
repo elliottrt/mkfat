@@ -4,6 +4,7 @@
 #include "writeable.h"
 #include "filetree.h"
 #include "bootsector.h"
+#include "fattype.h"
 
 class FATData : public FATWriteable
 {
@@ -11,7 +12,7 @@ public:
 
 	const FileTree &tree;
 	const FATBootSector &bootSector;
-	std::string fatType;
+	const FatType fatType;
 	size_t bytesPerCluster;
 
 	void writeDirectory(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const;
@@ -25,7 +26,7 @@ public:
 	void write16(FATDiskImage &image) const;
 	void write32(FATDiskImage &image) const;
 
-	FATData(const FileTree &tree, const FATBootSector &bootSector, const std::string &fatType);
+	FATData(const FileTree &tree, const FATBootSector &bootSector, FatType fatType);
 
 	void write(FATDiskImage &image) const override;
 

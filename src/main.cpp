@@ -1,4 +1,6 @@
 
+#include "common.h"
+#include "fattype.h"
 #include "filetree.h"
 #include "diskimage.h"
 #include "reserved.h"
@@ -7,6 +9,7 @@
 #include "error.h"
 
 #include <cstdlib>
+#include <string>
 
 void usage(void)
 {
@@ -14,7 +17,7 @@ void usage(void)
 	exit(EXIT_FAILURE);
 }
 
-char *findArgument(int argc, char **argv, const char *argName)
+const char *findArg(int argc, char **argv, const char *argName)
 {
 	for (int arg = 0; arg < argc; arg++)
 	{
@@ -32,6 +35,21 @@ char *findArgument(int argc, char **argv, const char *argName)
 	return NULL;
 }
 
+const char *findArgOrDefault(int argc, char **argv, const char *argName, const char *def) {
+	const char *findArgResult = findArg(argc, argv, argName);
+
+	return findArgResult ? findArgResult : def;
+}
+
+FatType fatTypeOrFail(const char *str) {
+	std::string fatTypeString = str;
+
+	if (fatTypeString == "32") return FatType::FAT32;
+	else if (fatTypeString == "16") return FatType::FAT16;
+	else if (fatTypeString == "12") return FatType::FAT12;
+	else mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", fatTypeString.c_str());
+}
+
 int main(int argc, char **argv)
 {
 	if (argc < 3)
@@ -44,25 +62,13 @@ int main(int argc, char **argv)
 
 	// TODO: namespace
 
-	// TODO: use enumeration for fatType instead of string
-
-	std::string fatType = std::string(argv[1]);
+	FatType fatType = fatTypeOrFail(argv[1]);
 	std::string outputPath = std::string(argv[2]);
 
-	char *rootDirectoryArg = findArgument(argc, argv, "-S");
-	char *fatBootSectorPathArg = findArgument(argc, argv, "-B");
-	char *reservedPathArg = findArgument(argc, argv, "-R");
-	char *volumeLabelArg = findArgument(argc, argv, "-V");
-
-	std::string rootDirectory = rootDirectoryArg ? rootDirectoryArg : "";
-	std::string fatBootSectorPath = fatBootSectorPathArg ? fatBootSectorPathArg : "";
-	std::string reservedPath = reservedPathArg ? reservedPathArg : "";
-	std::string volumeLabel = volumeLabelArg ? volumeLabelArg : VOLUMELABEL;
-
-	if (fatType != "12" && fatType != "16" && fatType != "32")
-	{
-		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", fatType.c_str());
-	}
+	std::string rootDirectory = findArgOrDefault(argc, argv, "-S", "");
+	std::string fatBootSectorPath = findArgOrDefault(argc, argv, "-B", "");
+	std::string reservedPath = findArgOrDefault(argc, argv, "-R", "");
+	std::string volumeLabel = findArgOrDefault(argc, argv, "-V", VOLUMELABEL);
 
 	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
 	FATDiskImage fatDiskImage = FATDiskImage(outputPath, fatReserved.bootSector.bytesPerSector);

@@ -1,6 +1,5 @@
 #include "fattable.h"
 #include "fatentry.h"
-#include "error.h"
 
 #define CLN_SHUT_BITMASK 0x8000000
 #define HRD_ERR_BITMAS 0x04000000
@@ -240,20 +239,16 @@ void FATTable::write32(FATDiskImage &image) const
 	}
 }
 
-FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, const std::string &fatType):
+FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType):
 	tree(tree), fatType(fatType), bootSector(bootSector) {
 
 }
 
 void FATTable::write(FATDiskImage &image) const
 {
-
-	if (this->fatType == "32")
-		this->write32(image);
-	else if (this->fatType == "16")
-		this->write16(image);
-	else if (this->fatType == "12")
-		this->write12(image);
-	else
-		mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", this->fatType.c_str());
+	switch (this->fatType) {
+		case FatType::FAT12: write12(image); break;
+		case FatType::FAT16: write16(image); break;
+		case FatType::FAT32: write32(image); break;
+	}
 }

@@ -1,8 +1,10 @@
 #ifndef _MKFAT_BOOTSECTOR
 #define _MKFAT_BOOTSECTOR
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
+
+#include "fattype.h"
 
 struct FATBootSector
 {
@@ -61,7 +63,7 @@ struct FATBootSector
 	void defaultBootSector32(const std::string &volumeLabel);
 	void bootSectorCommon(void);
 
-	FATBootSector(const std::string &bootPath, const std::string &volumeLabel, const std::string &fatType);
+	FATBootSector(const std::string &bootPath, const std::string &volumeLabel, FatType fatType);
 	FATBootSector(void) = default;
 
 } __attribute__ ((packed));

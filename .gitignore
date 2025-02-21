@@ -46,3 +46,4 @@ build/
 
 # IDE outputs
 .vscode/
+.cache/

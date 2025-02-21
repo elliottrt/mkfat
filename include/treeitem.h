@@ -9,7 +9,6 @@
 
 struct TreeItem
 {
-	// TODO: does this have to be a pointer? or could it be just TreeItem
 	std::vector<TreeItem *> children;
 	std::string name;
 
