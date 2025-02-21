@@ -1,11 +1,12 @@
-CPP=g++
-CPPFLAGS=-Wall -Wextra -Wpedantic -std=c++17
-OUT=mkfat
+CXXFLAGS:=-Wall -Wextra -Wpedantic -std=c++17
+TARGET=mkfat
 
-CPPSRC=$(wildcard src/*.cpp)
-CPPHDR=$(wildcard src/*.h)
+CXXSRC=$(wildcard src/*.cpp)
+CXXHDR=$(wildcard src/*.h)
 
-all: $(OUT)
+.PHONY: all
 
-$(OUT): $(CPPSRC) $(CPPHDR) ./Makefile
-	$(CPP) -o $(OUT) $(CPPSRC) $(CPPFLAGS)
+all: $(TARGET)
+
+$(TARGET): $(CXXSRC) $(CXXHDR) ./Makefile
+	$(CXX) -o $(TARGET) $(CXXSRC) $(CXXFLAGS)
