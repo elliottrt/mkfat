@@ -6,22 +6,33 @@
 #include "reserved.h"
 #include "fattable.h"
 #include "fatdata.h"
-#include "error.h"
+#include "logging.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 
 void usage(void)
 {
-	fprintf(stderr, "Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel]\n");
+	fprintf(stderr, "Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel] [-v|--verbose]\n");
 	exit(EXIT_FAILURE);
 }
 
-const char *findArg(int argc, char **argv, const char *argName)
+bool hasArg(int argc, const char **argv, const char *argName)
 {
 	for (int arg = 0; arg < argc; arg++)
 	{
-		char *result = strstr(argv[arg], argName);
+		if (strcmp(argName, argv[arg]) == 0)
+			return true;
+	}
+	return false;
+}
+
+const char *findArgVal(int argc, const char **argv, const char *argName)
+{
+	for (int arg = 0; arg < argc; arg++)
+	{
+		const char *result = strstr(argv[arg], argName);
 		if (result && result == argv[arg])
 		{
 			if (strlen(argv[arg]) != strlen(argName))
@@ -29,16 +40,17 @@ const char *findArg(int argc, char **argv, const char *argName)
 			else if (arg + 1 < argc)
 				return argv[arg + 1];
 			else
-				printf("Empty argument '%s'\n", argv[arg]);
+				// empty argument
+				return NULL;
 		}
 	}
 	return NULL;
 }
 
-const char *findArgOrDefault(int argc, char **argv, const char *argName, const char *def) {
-	const char *findArgResult = findArg(argc, argv, argName);
+const char *findArgValOrDefault(int argc, const char **argv, const char *argName, const char *def) {
+	const char *findArgValResult = findArgVal(argc, argv, argName);
 
-	return findArgResult ? findArgResult : def;
+	return findArgValResult ? findArgValResult : def;
 }
 
 FatType fatTypeOrFail(const char *str) {
@@ -50,15 +62,13 @@ FatType fatTypeOrFail(const char *str) {
 	else mkfatError(1, "invalid fat type '%s', must be one of: 12, 16, 32\n", fatTypeString.c_str());
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 	if (argc < 3)
 		usage();
 
 	// TODO: testing - can use 'hdiutil attach <fs.img>' to attach and 'hdiutil detach <disk thing>' to mount and unmount
 	// TODO: 'hdiutil imageinfo /dev/<whatever>' and 'diskutil'
-
-	// TODO: make all of the output that mkfat generates an option which is disabled by default
 
 	// TODO: namespace
 
@@ -67,10 +77,13 @@ int main(int argc, char **argv)
 	FatType fatType = fatTypeOrFail(argv[1]);
 	std::string outputPath = std::string(argv[2]);
 
-	std::string rootDirectory = findArgOrDefault(argc, argv, "-S", "");
-	std::string fatBootSectorPath = findArgOrDefault(argc, argv, "-B", "");
-	std::string reservedPath = findArgOrDefault(argc, argv, "-R", "");
-	std::string volumeLabel = findArgOrDefault(argc, argv, "-V", VOLUMELABEL);
+	std::string rootDirectory = findArgValOrDefault(argc, argv, "-S", "");
+	std::string fatBootSectorPath = findArgValOrDefault(argc, argv, "-B", "");
+	std::string reservedPath = findArgValOrDefault(argc, argv, "-R", "");
+	std::string volumeLabel = findArgValOrDefault(argc, argv, "-V", VOLUMELABEL);
+	bool verbose = hasArg(argc, argv, "-v") || hasArg(argc, argv, "--verbose");
+
+	mkfatSetVerbose(verbose);
 
 	// initialize FAT data structures
 

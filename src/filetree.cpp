@@ -1,6 +1,5 @@
 #include "filetree.h"
 #include "fatformat.h"
-#include "error.h"
 
 FileTree::FileTree(const std::string &path, const std::string &volumeLabel)
 {

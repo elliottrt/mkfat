@@ -1,6 +1,6 @@
 #include "reserved.h"
 #include "common.h"
-#include "error.h"
+#include "logging.h"
 #include "fattype.h"
 
 void FATReserved::loadReservedData(const std::string &reservedDataPath)

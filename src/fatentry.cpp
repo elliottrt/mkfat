@@ -123,13 +123,7 @@ void FATEntry12(uint8_t b0, uint8_t b1)
 							 (uint8_t)(delayedBytes[1] | ((b0 & 0xF) << 4)), 
 							 (uint8_t)(((b0 & 0xF0) >> 4) | ((b1 & 0x0F) << 4)) 
 						   };
-		/*
-		printf("delayed entry: %x\n", delayedBytes[0]);
-		printf("delayed entry: %x\n", b0 & 0x0F);
-		printf("delayed entry: %x\n", delayedBytes[1]);
-		printf("delayed entry: %x\n", (b0 & 0xF0) >> 4);
-		printf("delayed entry: %x\n", b1 & 0xF0);
-		*/
+
 		_diskImage->writeImgFile(bytes, 3);
 		_FATEntryCount += 2;
 	}

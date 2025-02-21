@@ -1,5 +1,5 @@
 #include "treeitem.h"
-#include "error.h"
+#include "logging.h"
 
 #include <sys/stat.h>
 

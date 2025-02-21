@@ -1,6 +1,6 @@
 #include "common.h"
 #include "fatformat.h"
-#include "error.h"
+#include "logging.h"
 
 #include <cerrno>
 

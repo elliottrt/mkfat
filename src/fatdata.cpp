@@ -1,12 +1,10 @@
 #include "fatdata.h"
-#include "error.h"
+#include "logging.h"
 #include "fattype.h"
-
-#include <cstdlib>
 
 void FATData::writeDirectory(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const
 {
-	printf("Writing directory '%.8s' with %lu entries\n", item->direntry.fileName, item->children.size());
+	mkfatVerbose("Writing directory '%.8s' with %lu entries\n", item->direntry.fileName, item->children.size());
 
 	for (TreeItem *child : item->children)
 	{
@@ -20,8 +18,8 @@ void FATData::writeDirectory(const TreeItem *item, FATDiskImage &image, size_t o
 
 void FATData::writeFile(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const
 {
-	printf("Writing file '%.8s' '%.3s' of size %u\n", item->direntry.fileName, 
-			item->direntry.fileExtension,  item->direntry.fileSize);
+	mkfatVerbose("Writing file '%.8s' '%.3s' of size %u\n",
+		item->direntry.fileName, item->direntry.fileExtension,  item->direntry.fileSize);
 
 	uint8_t *fileData = (uint8_t *) calloc(item->direntry.fileSize, sizeof(uint8_t));
 

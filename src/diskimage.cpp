@@ -1,6 +1,6 @@
 #include "diskimage.h"
 #include "common.h"
-#include "error.h"
+#include "logging.h"
 
 #include <cstdio>
 

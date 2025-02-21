@@ -1,5 +1,6 @@
 #include "fattable.h"
 #include "fatentry.h"
+#include "logging.h"
 
 #define CLN_SHUT_BITMASK 0x8000000
 #define HRD_ERR_BITMAS 0x04000000
@@ -14,15 +15,9 @@ void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
-
 	entryCount--; // remove EOC, we'll do that manually
 
-	// if we don't write anything, don't print anything
-	if (entryCount >= 0 && rootEntryClusters == 0) 
-	{
-		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
-		printf("entry size: %lu\n", entryCount + 1);
-	}
+	mkfatVerbose("Writing fatentry '%.8s' '%.3s', size: %zd\n", item->direntry.fileName, item->direntry.fileExtension, entryCount + 1);
 
 	if (itemSize == 0) 
 		return;
@@ -99,11 +94,7 @@ void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 
 	entryCount--; // remove EOC, we'll do that manually
 
-	if (entryCount >= 0) 
-	{
-		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
-		printf("entry size: %lu\n", entryCount + 1);
-	}
+	mkfatVerbose("Writing fatentry '%.8s' '%.3s', size: %zd\n", item->direntry.fileName, item->direntry.fileExtension, entryCount + 1);
 
 	if (itemSize == 0) 
 		return;
@@ -175,11 +166,7 @@ void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
 	entryCount--; // remove EOC, we'll do that manually
 
-	if (entryCount >= 0) 
-	{
-		printf("Writing fatentry for '%.8s' '%.3s', ", item->direntry.fileName, item->direntry.fileExtension);
-		printf("entry size: %lu\n", entryCount + 1);
-	}
+	mkfatVerbose("Writing fatentry '%.8s' '%.3s', size: %zd\n", item->direntry.fileName, item->direntry.fileExtension, entryCount + 1);
 
 	if (itemSize == 0) 
 		return;
