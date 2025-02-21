@@ -1,36 +1,5 @@
 #include "fatentry.h"
 
-FATDiskImage *_diskImage = NULL;
-size_t _FATEntryCount = 0;
-
-uint16_t _FAT12DelayedEntry = 0x0000;
-bool entryWaiting = false;
-
-void FATEntry32(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
-{
-	uint8_t bytes[4] = {b0, b1, b2, (uint8_t) (b3 & 0x0F)};
-
-	_diskImage->writeImgFile(bytes, 4);
-	_FATEntryCount++;
-}
-
-void FATEntry32NoAnd(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
-{
-	uint8_t bytes[4] = {b0, b1, b2, b3};
-
-	_diskImage->writeImgFile(bytes, 4);
-	_FATEntryCount++;
-}
-
-void FATEntry32(uint32_t entry)
-{
-	uint8_t *bytes = (uint8_t *) &entry;
-	bytes[3] &= 0x0F;
-
-	_diskImage->writeImgFile(bytes, 4);
-	_FATEntryCount++;
-}
-
 enum FATEntryType FATEntryType32(uint32_t value)
 {
 	switch (value)
@@ -62,22 +31,6 @@ enum FATEntryType FATEntryType32(uint32_t value)
 	}
 
 	return RESERVEDCLUSTER;
-}
-
-void FATEntry16(uint8_t b0, uint8_t b1)
-{
-	uint8_t bytes[2] = {b0, b1};
-
-	_diskImage->writeImgFile(bytes, 2);
-	_FATEntryCount++;
-}
-
-void FATEntry16(uint16_t entry)
-{
-	uint8_t *bytes = (uint8_t *) &entry;
-
-	_diskImage->writeImgFile(bytes, 2);
-	_FATEntryCount++;
 }
 
 enum FATEntryType FATEntryType16(uint16_t value)
@@ -113,61 +66,6 @@ enum FATEntryType FATEntryType16(uint16_t value)
 	return RESERVEDCLUSTER;
 }
 
-void FATEntry12(uint8_t b0, uint8_t b1)
-{
-	if (entryWaiting)
-	{
-		uint8_t delayedBytes[2] = { (uint8_t)(_FAT12DelayedEntry & 0xFF), (uint8_t)((_FAT12DelayedEntry & 0xF00) >> 8) };
-		uint8_t bytes[3] = { 
-							 delayedBytes[0], 
-							 (uint8_t)(delayedBytes[1] | ((b0 & 0xF) << 4)), 
-							 (uint8_t)(((b0 & 0xF0) >> 4) | ((b1 & 0x0F) << 4)) 
-						   };
-
-		_diskImage->writeImgFile(bytes, 3);
-		_FATEntryCount += 2;
-	}
-	else
-	{
-		_FAT12DelayedEntry = b0 | ((uint16_t)b1 << 8);
-	}
-	entryWaiting = !entryWaiting;
-}
-
-void FATEntry12(uint16_t entry)
-{
-	if (entryWaiting)
-	{
-		uint8_t delayedBytes[2] = { (uint8_t) (_FAT12DelayedEntry & 0xFF), (uint8_t)((_FAT12DelayedEntry & 0xF00) >> 8) };
-		uint8_t bytes[3] = { 
-							 delayedBytes[0], 
-							 (uint8_t)(delayedBytes[1] | ((entry & 0xF) << 4)), 
-							 (uint8_t)((entry & 0xFF0) >> 4) 
-						   };
-		_diskImage->writeImgFile(bytes, 3);
-		_FATEntryCount += 2;
-	}
-	else
-	{
-		_FAT12DelayedEntry = entry;
-	}
-	entryWaiting = !entryWaiting;
-}
-
-void FATEntry12Flush(void)
-{
-	if (entryWaiting)
-	{
-		uint8_t bytes[3] = { (uint8_t)(_FAT12DelayedEntry & 0xFF), 
-							 (uint8_t)((_FAT12DelayedEntry & 0xF00) >> 8),
-							 0x00
-							};
-		_diskImage->writeImgFile(bytes, 3);
-		_FATEntryCount += 2;
-		entryWaiting = false;
-	}
-}
-
 enum FATEntryType FATEntryType12(uint16_t value)
 {
 	switch (value & 0x0FFF)
@@ -199,23 +97,5 @@ enum FATEntryType FATEntryType12(uint16_t value)
 	}
 
 	return RESERVEDCLUSTER;
-}
-
-// we use a reference to ensure that FATEntryDiskImage will
-// be called with a valid pointer, but we still want an empty
-// start up state
-void FATEntryDiskImage(FATDiskImage &image)
-{
-	_diskImage = &image;
-}
-
-size_t FATEntryGetCount()
-{
-	return _FATEntryCount;
-}
-
-void FATEntryResetCount()
-{
-	_FATEntryCount = 0;
 }
 
