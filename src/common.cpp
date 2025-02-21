@@ -1,5 +1,8 @@
 #include "common.h"
 #include "fatformat.h"
+#include "error.h"
+
+#include <cerrno>
 
 direntry::direntry(void)
 {
@@ -29,6 +32,10 @@ void direntry::setFileName(const char *name)
 
 	if (dotLocation)
 	{
+		// if there's a second . then this filename is bad and we don't want to deal with it
+		if (strchr(dotLocation + 1, '.'))
+			mkfatError(1, "bad filename '%s': contains multiple .\n", name);
+
 		formatFATName(dotLocation + 1, this->fileExtension, DIRENTRY_EXTLEN);
 		nameLength -= strlen(dotLocation);
 	}
@@ -38,42 +45,50 @@ void direntry::setFileName(const char *name)
 	}
 
 	formatFATName(name, this->fileName, min(DIRENTRY_NAMELEN, nameLength));
-	
-	/*
-	fputs("'", stdout);
-	fwrite(this->filename, 1, 8, stdout);
-	fputs("' '", stdout);
-	fwrite(this->fileext, 1, 3, stdout);
-	fputs("'\n", stdout);
-	*/
 }
 
-void fileRead(FILE *file, void *out, size_t size)
+void fileRead(const char *filename, void *out, size_t size)
 {
-	size_t read = fread(out, 1, size, file);
-	if (read != size)
+	FILE *file = fopen(filename, "rb");
+
+	if (!file)
 	{
-		fprintf(stderr, "Problem reading bootsector, only %lu/%lu byte(s) read.\n", read, size);
-		if (feof(file))
-		{
-			fprintf(stderr, "Problem: Reached EOF\n");
-		}
-		if (ferror(file))
-		{
-			perror("Problem");
-		}
-		exit(1);
+		mkfatError(1,
+			"unable to open file '%s': %s\n",
+			filename, strerror(errno)
+		);
 	}
+
+	size_t bytesRead = fread(out, 1, size, file);
+
+	if (bytesRead != size)
+	{
+		mkfatError(1,
+			"unable to read file '%s': %s\n", filename,
+			feof(file) ? "reached EOF" : "file error"
+		);
+	}
+
+	// we don't care about the exit code, since we aren't writing
+	fclose(file);
 }
 
-size_t fileSize(FILE *f)
+size_t fileSize(const char *filename)
 {
-	size_t pos = ftell(f);
+	FILE *file = fopen(filename, "rb");
 
-	fseek(f, 0, SEEK_END);
-	size_t size = ftell(f);
+	if (!file)
+	{
+		mkfatError(1,
+			"unable to open file '%s': %s\n",
+			filename, strerror(errno)
+		);
+	}
 
-	fseek(f, pos, SEEK_SET);
+	fseek(file, 0, SEEK_END);
+	size_t size = ftell(file);
+
+	fclose(file);
 
 	return size;
 }

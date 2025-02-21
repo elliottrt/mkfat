@@ -1,8 +1,9 @@
 #include "bootsector.h"
 #include "common.h"
 #include "fatformat.h"
+#include "fattype.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 struct spctable
 {
@@ -72,36 +73,6 @@ uint8_t getSectorsPerCluster(struct spctable *table, size_t tableSize, size_t di
 			return table[i].sectorsPerCluster;
 	}
 	return 0;
-}
-
-void FATBootSector::readFromFile(const std::string &bootPath)
-{
-	FILE *fBoot = fopen(bootPath.c_str(), "rb");
-
-	if (!fBoot)
-	{
-		perror("Unable to open bootsector file");
-		exit(1);
-	}
-
-	size_t bytesRead = fread(this, 1, DISK_SECTOR_SIZE, fBoot);
-
-	if (bytesRead != DISK_SECTOR_SIZE)
-	{
-		if (feof(fBoot))
-			fprintf(stderr, "Unable to read bootsector file: reached EOF\n");
-		if (ferror(fBoot))
-			perror("Unable to read bootsector file");
-		exit(1);
-	}
-
-	int status = fclose(fBoot);
-
-	if (status != 0)
-	{
-		perror("Unable to close bootsector file");
-		exit(1);
-	}
 }
 
 void FATBootSector::defaultBootSector12(const std::string &volumeLabel)
@@ -240,16 +211,16 @@ void FATBootSector::bootSectorCommon(void)
 	this->hiddenSectors = 0;
 }
 
-FATBootSector::FATBootSector(const std::string &bootPath, const std::string &volumeLabel, const std::string &fatType)
+FATBootSector::FATBootSector(const std::string &bootPath, const std::string &volumeLabel, FatType fatType)
 {
-
 	memset(this, 0, sizeof(struct FATBootSector));
 
 	if (bootPath != "")
-		this->readFromFile(bootPath);
-	else if (fatType == "32")
+		fileRead(bootPath.c_str(), this, DISK_SECTOR_SIZE);
+
+	else if (fatType == FatType::FAT32)
 		this->defaultBootSector32(volumeLabel);
-	else if (fatType == "16")
+	else if (fatType == FatType::FAT16)
 		this->defaultBootSector16(volumeLabel);
 	else
 		this->defaultBootSector12(volumeLabel);

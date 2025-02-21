@@ -1,8 +1,7 @@
 #ifndef _MKFAT_FATFORMAT
 #define _MKFAT_FATFORMAT
 
-#include <stdint.h>
-#include <string.h>
+#include <stddef.h>
 
 int formatFATChar(int c);
 

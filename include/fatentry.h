@@ -3,6 +3,8 @@
 
 #include "diskimage.h"
 
+// TODO: move this whole thing into a class so it isn't so weird (preferably diskimage)
+
 enum FATEntryType
 {
 	FREECLUSTER = 0,
@@ -30,7 +32,7 @@ void FATEntry12(uint16_t entry);
 void FATEntry12Flush(void);
 enum FATEntryType FATEntryType12(uint16_t value);
 
-void FATEntryDiskImage(FATDiskImage *image);
+void FATEntryDiskImage(FATDiskImage &image);
 
 size_t FATEntryGetCount();
 void FATEntryResetCount();

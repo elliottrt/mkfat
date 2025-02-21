@@ -7,6 +7,7 @@
 #include <string.h>
 
 #define DISK_SECTOR_SIZE 512
+// TODO: some of these things should be customizable
 #define FAT_COUNT 2
 #define DRIVE_NUM 0x80
 #define BOOT_SIGNATURE 0x29
@@ -17,6 +18,8 @@
 #define MEDIA_TYPE 0xF8
 #define DIRENTRY_NAMELEN 8
 #define DIRENTRY_EXTLEN 3
+
+// TODO: make these customizable
 // about 64 mb
 #define DISK_SIZE_32 81920
 #define TOTAL_SECTORS_32 DISK_SIZE_32
@@ -59,9 +62,10 @@ struct direntry
 
 	direntry(void);
 	void setFileName(const char *name);
+	
 } __attribute__ ((packed));
 
-void fileRead(FILE *file, void *out, size_t size);
-size_t fileSize(FILE *file);
+void fileRead(const char *filename, void *out, size_t size);
+size_t fileSize(const char *filename);
 
 #endif

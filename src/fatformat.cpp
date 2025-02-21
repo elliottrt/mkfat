@@ -1,9 +1,10 @@
 #include "fatformat.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cctype>
+#include <cassert>
 
 char FAT_VALID_FILENAME_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'()-@^_`{}~";
 #define FAT_DEFAULT_FILENAME_CHAR '_'
@@ -32,21 +33,9 @@ int formatFATChar(int c)
 void formatFATName(const char *name, char *dest, size_t max)
 {
 
-	if (dest == NULL)
-	{
-		fprintf(stderr, "Null destination string in formatting\n");
-		//exit(1);
-		return;
-	}
+	assert(dest && name && "null source or dest in formatFATName");
 
 	memset(dest, FAT_DEFAULT_FILENAME_PADDING, max);
-
-	if (name == NULL)
-	{
-		fprintf(stderr, "Null source string in formatting\n");
-		//exit(1);
-		return;
-	}
 
 	while (name[0] == ' ') 
 		name++;

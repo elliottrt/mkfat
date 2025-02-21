@@ -1,58 +1,48 @@
 #include "fatdata.h"
+#include "error.h"
+#include "fattype.h"
 
-void FATData::writeDirectory(TreeItem *item, FATDiskImage *image, size_t occupiedBytes) const
+#include <cstdlib>
+
+void FATData::writeDirectory(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const
 {
 	printf("Writing directory '%.8s' with %lu entries\n", item->direntry.fileName, item->children.size());
 
-	// TODO: since vector items are contiguous? in memory, maybe try doing a single write
 	for (TreeItem *child : item->children)
 	{
-		image->writeImgFile(&child->direntry, sizeof(struct direntry));
+		image.writeImgFile(&child->direntry, sizeof(struct direntry));
 	}
 
 	size_t bytesWritten = item->children.size() * sizeof(struct direntry);
 	ssize_t bytesLeft = occupiedBytes - bytesWritten;
-	image->writeImgFileZeros(bytesLeft);
+	image.writeImgFileZeros(bytesLeft);
 }
 
-void FATData::writeFile(TreeItem *item, FATDiskImage *image, size_t occupiedBytes) const
+void FATData::writeFile(const TreeItem *item, FATDiskImage &image, size_t occupiedBytes) const
 {
 	printf("Writing file '%.8s' '%.3s' of size %u\n", item->direntry.fileName, 
-													   item->direntry.fileExtension, 
-													   item->direntry.fileSize);
+			item->direntry.fileExtension,  item->direntry.fileSize);
 
-	FILE *fFile = fopen(item->path().c_str(), "rb");
-	uint8_t *fileData = (uint8_t *) malloc(sizeof(uint8_t) * item->direntry.fileSize);
+	uint8_t *fileData = (uint8_t *) calloc(item->direntry.fileSize, sizeof(uint8_t));
 
-	if (!fFile)
-	{
-		fprintf(stderr, "Unable to open file '%s' to copy to disk image\n", item->path().c_str());
-		exit(1);
-	}
 	if (!fileData)
 	{
-		fprintf(stderr, "Unable to allocate memory for copying file '%s'\n", item->path().c_str());
-		exit(1);
+		mkfatError(1, "unable to allocate memory for copying file '%s'\n", item->path().c_str());
 	}
 
-	fileRead(fFile, fileData, item->direntry.fileSize);
+	fileRead(item->path().c_str(), fileData, item->direntry.fileSize);
 
-	image->writeImgFile(fileData, item->direntry.fileSize);
+	image.writeImgFile(fileData, item->direntry.fileSize);
 
-	fclose(fFile);
 	free(fileData);
 
 	ssize_t bytesLeft = occupiedBytes - item->direntry.fileSize;
-	image->writeImgFileZeros(bytesLeft);
+	image.writeImgFileZeros(bytesLeft);
 }
 
-void FATData::write12Recursive(TreeItem *item, FATDiskImage *image, size_t rootSectors) const
+void FATData::write12Recursive(const TreeItem *item, FATDiskImage &image, size_t rootSectors) const
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
@@ -60,27 +50,23 @@ void FATData::write12Recursive(TreeItem *item, FATDiskImage *image, size_t rootS
 	size_t occupiedBytes = this->bytesPerCluster * clusterCount;
 
 	if (rootSectors != 0)
-		occupiedBytes = rootSectors * this->bootSector->bytesPerSector;
+		occupiedBytes = rootSectors * this->bootSector.bytesPerSector;
 
-	if (item->directory())
+	if (item->is_directory())
 		this->writeDirectory(item, image, occupiedBytes);
 	else
 		this->writeFile(item, image, occupiedBytes);
 
-	for (TreeItem *child : item->children)
+	for (const TreeItem *child : item->children)
 	{
 		this->write12Recursive(child, image, 0);
 	}
 
 }
 
-void FATData::write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootSectors) const
+void FATData::write16Recursive(const TreeItem *item, FATDiskImage &image, size_t rootSectors) const
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
@@ -88,90 +74,78 @@ void FATData::write16Recursive(TreeItem *item, FATDiskImage *image, size_t rootS
 	size_t occupiedBytes = this->bytesPerCluster * clusterCount;
 
 	if (rootSectors != 0)
-		occupiedBytes = rootSectors * this->bootSector->bytesPerSector;
+		occupiedBytes = rootSectors * this->bootSector.bytesPerSector;
 
-	if (item->directory())
+	if (item->is_directory())
 		this->writeDirectory(item, image, occupiedBytes);
 	else
 		this->writeFile(item, image, occupiedBytes);
 
-	for (TreeItem *child : item->children)
+	for (const TreeItem *child : item->children)
 	{
 		this->write16Recursive(child, image, 0);
 	}
 
 }
 
-void FATData::write32Recursive(TreeItem *item, FATDiskImage *image) const
+void FATData::write32Recursive(const TreeItem *item, FATDiskImage &image) const
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 	size_t clusterCount = (itemSize + (this->bytesPerCluster - 1)) / this->bytesPerCluster;
 
 	if (itemSize == 0) return;
 
-	if (item->directory())
+	if (item->is_directory())
 		this->writeDirectory(item, image, this->bytesPerCluster * clusterCount);
 	else
 		this->writeFile(item, image, this->bytesPerCluster * clusterCount);
 
-	for (TreeItem *child : item->children)
+	for (const TreeItem *child : item->children)
 	{
 		this->write32Recursive(child, image);
 	}
 }
 
-void FATData::write12(FATDiskImage *image) const
+void FATData::write12(FATDiskImage &image) const
 {
-	size_t rootSectors = this->bootSector->rootEntryCount * sizeof(struct direntry);
-	rootSectors = (rootSectors + this->bootSector->bytesPerSector - 1) / this->bootSector->bytesPerSector;
-	this->write12Recursive(this->tree->root, image, rootSectors);
+	size_t rootSectors = this->bootSector.rootEntryCount * sizeof(struct direntry);
+	rootSectors = (rootSectors + this->bootSector.bytesPerSector - 1) / this->bootSector.bytesPerSector;
+	this->write12Recursive(this->tree.root, image, rootSectors);
 	this->padZeros(image, DISK_SIZE_12);
 }
 
-void FATData::write16(FATDiskImage *image) const
+void FATData::write16(FATDiskImage &image) const
 {
-	size_t rootSectors = this->bootSector->rootEntryCount * sizeof(struct direntry);
-	rootSectors = (rootSectors + this->bootSector->bytesPerSector - 1) / this->bootSector->bytesPerSector;
-	this->write16Recursive(this->tree->root, image, rootSectors);
+	size_t rootSectors = this->bootSector.rootEntryCount * sizeof(struct direntry);
+	rootSectors = (rootSectors + this->bootSector.bytesPerSector - 1) / this->bootSector.bytesPerSector;
+	this->write16Recursive(this->tree.root, image, rootSectors);
 	this->padZeros(image, DISK_SIZE_16);
 }
 
-void FATData::write32(FATDiskImage *image) const
+void FATData::write32(FATDiskImage &image) const
 {
-	this->write32Recursive(this->tree->root, image);
+	this->write32Recursive(this->tree.root, image);
 	this->padZeros(image, DISK_SIZE_32);
 }
 
-FATData::FATData(FileTree *tree, FATBootSector *bootSector, const std::string &fatType)
-{
-	this->tree = tree;
-	this->bootSector = bootSector;
-	this->fatType = fatType;
-	this->bytesPerCluster = this->bootSector->bytesPerSector * this->bootSector->sectorsPerCluster;
+FATData::FATData(const FileTree &tree, const FATBootSector &bootSector, FatType fatType): 
+	tree(tree), bootSector(bootSector), fatType(fatType) {
+
+	this->bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
 }
 
-void FATData::write(FATDiskImage *image) const
+void FATData::write_to(FATDiskImage &image) const
 {
-	if (this->fatType == "32")
-		this->write32(image);
-	else if (this->fatType == "16")
-		this->write16(image);
-	else if (this->fatType == "12")
-		this->write12(image);
-	else
-	{
-		fprintf(stderr, "Invalid fat type '%s', must be 12,16,32\n", this->fatType.c_str());
-		exit(1);
+	switch (this->fatType) {
+		case FatType::FAT12: write12(image); break;
+		case FatType::FAT16: write16(image); break;
+		case FatType::FAT32: write32(image); break;
 	}
 }
 
-void FATData::padZeros(FATDiskImage *image, size_t diskSize) const
+void FATData::padZeros(FATDiskImage &image, size_t diskSize) const
 {
-	size_t totalBytes = image->sizeImgFile();
-	size_t bytesLeft = diskSize * this->bootSector->bytesPerSector - totalBytes;
-	image->writeImgFileZeros(bytesLeft);
+	size_t totalBytes = image.sizeImgFile();
+	size_t bytesLeft = diskSize * this->bootSector.bytesPerSector - totalBytes;
+	image.writeImgFileZeros(bytesLeft);
 }

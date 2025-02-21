@@ -1,8 +1,11 @@
 #ifndef _MKFAT_BOOTSECTOR
 #define _MKFAT_BOOTSECTOR
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
+
+#include "common.h"
+#include "fattype.h"
 
 struct FATBootSector
 {
@@ -56,16 +59,16 @@ struct FATBootSector
 
 	uint8_t bootSignature[2];
 
-	void readFromFile(const std::string &bootPath);
-
 	void defaultBootSector12(const std::string &volumeLabel);
 	void defaultBootSector16(const std::string &volumeLabel);
 	void defaultBootSector32(const std::string &volumeLabel);
 	void bootSectorCommon(void);
 
-	FATBootSector(const std::string &bootPath, const std::string &volumeLabel, const std::string &fatType);
+	FATBootSector(const std::string &bootPath, const std::string &volumeLabel, FatType fatType);
 	FATBootSector(void) = default;
 
 } __attribute__ ((packed));
+
+static_assert(sizeof(FATBootSector) == DISK_SECTOR_SIZE, "FATBootSector must be the same size as a disk sector");
 
 #endif

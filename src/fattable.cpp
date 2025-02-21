@@ -10,11 +10,7 @@
 // TODO: make rootEntryClusters a boolean to of whether the current dir is the root
 void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -44,6 +40,7 @@ void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 			item->dotdot->direntry.firstClusterHi = 0;
 		}
 
+		// special case where .. entries in folders in the root have firstCluster = 0
 		if (item->dotdot && item->parent && !item->parent->parent)
 		{
 			item->dotdot->direntry.firstClusterLo = 0;
@@ -60,46 +57,42 @@ void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 		*cluster = *cluster + 1;
 	}
 
-	if (!item->directory()) return;
-
-	for (TreeItem *child : item->children)
-	{
-		_FATEntry_write12(child, cluster, bytesPerCluster, 0);
+	if (item->is_directory()) {
+		for (TreeItem *child : item->children)
+			_FATEntry_write12(child, cluster, bytesPerCluster, 0);
 	}
 
 }
 
-void FATTable::write12(FATDiskImage *image) const
+void FATTable::write12(FATDiskImage &image) const
 {
 	FATEntryDiskImage(image);
-	for (size_t fat = 0; fat < this->bootSector->fatCount; fat++)
+	
+	for (size_t fat = 0; fat < this->bootSector.fatCount; fat++)
 	{
 		FATEntryResetCount();
-		FATEntry12(this->bootSector->mediaDescriptor, 0xFF);
+		FATEntry12(this->bootSector.mediaDescriptor, 0xFF);
 		FATEntry12(0xFF, 0xFF);
 
 		uint32_t cluster = FATEntryGetCount();
-		size_t bytesPerCluster = this->bootSector->bytesPerSector * this->bootSector->sectorsPerCluster;
-		size_t rootEntryClusters = ((this->bootSector->rootEntryCount * sizeof(struct direntry)) + 
+		size_t bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
+		size_t rootEntryClusters = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + 
 									(bytesPerCluster - 1)) / bytesPerCluster;
-		_FATEntry_write12(this->tree->root, &cluster, bytesPerCluster, rootEntryClusters);
+
+		_FATEntry_write12(this->tree.root, &cluster, bytesPerCluster, rootEntryClusters);
 
 		FATEntry12Flush();
 
 		size_t bytesWritten = (FATEntryGetCount() * 3) / 2;
-		size_t bytesLeft = this->bootSector->fatSize16 * this->bootSector->bytesPerSector - bytesWritten;
+		size_t bytesLeft = this->bootSector.fatSize16 * this->bootSector.bytesPerSector - bytesWritten;
 
-		image->writeImgFileZeros(bytesLeft);
+		image.writeImgFileZeros(bytesLeft);
 	}
 }
 
 void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -144,44 +137,39 @@ void _FATEntry_write16(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 		*cluster = *cluster + 1;
 	}
 
-	if (!item->directory()) return;
-
-	for (TreeItem *child : item->children)
-	{
-		_FATEntry_write16(child, cluster, bytesPerCluster, 0);
+	if (item->is_directory()) {
+		for (TreeItem *child : item->children)
+			_FATEntry_write16(child, cluster, bytesPerCluster, 0);
 	}
 
 }
 
-void FATTable::write16(FATDiskImage *image) const
+void FATTable::write16(FATDiskImage &image) const
 {
 	FATEntryDiskImage(image);
-	for (size_t fat = 0; fat < this->bootSector->fatCount; fat++)
+
+	for (size_t fat = 0; fat < this->bootSector.fatCount; fat++)
 	{
 		FATEntryResetCount();
 		FATEntry16(MEDIA_TYPE, 0xFF);
 		FATEntry16(0xFF, 0xFF);
 
 		uint32_t cluster = FATEntryGetCount();
-		size_t bytesPerCluster = this->bootSector->bytesPerSector * this->bootSector->sectorsPerCluster;
-		size_t rootEntryClusters = ((this->bootSector->rootEntryCount * sizeof(struct direntry)) + 
+		size_t bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
+		size_t rootEntryClusters = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + 
 									(bytesPerCluster - 1)) / bytesPerCluster;
-		_FATEntry_write16(this->tree->root, &cluster, bytesPerCluster, rootEntryClusters);
+		_FATEntry_write16(this->tree.root, &cluster, bytesPerCluster, rootEntryClusters);
 
 		size_t bytesWritten = FATEntryGetCount() * 2;
-		size_t bytesLeft = this->bootSector->fatSize16 * this->bootSector->bytesPerSector - bytesWritten;
+		size_t bytesLeft = this->bootSector.fatSize16 * this->bootSector.bytesPerSector - bytesWritten;
 
-		image->writeImgFileZeros(bytesLeft);
+		image.writeImgFileZeros(bytesLeft);
 	}
 }
 
 void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster)
 {
-	size_t itemSize;
-	if (item->directory())
-		itemSize = item->children.size() * sizeof(struct direntry);
-	else
-		itemSize = item->direntry.fileSize;
+	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
 	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
@@ -222,54 +210,45 @@ void _FATEntry_write32(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster
 	FATEntry32(ENDCLUSTER32);
 	*cluster = *cluster + 1;
 
-	if (!item->directory()) return;
-
-	for (TreeItem *child : item->children)
-	{
-		_FATEntry_write32(child, cluster, bytesPerCluster);
+	
+	if (item->is_directory()) {
+		for (TreeItem *child : item->children)
+			_FATEntry_write32(child, cluster, bytesPerCluster);
 	}
 
 }
 
-void FATTable::write32(FATDiskImage *image) const
+void FATTable::write32(FATDiskImage &image) const
 {
 	FATEntryDiskImage(image);
-	for (size_t fat = 0; fat < this->bootSector->fatCount; fat++)
+
+	for (size_t fat = 0; fat < this->bootSector.fatCount; fat++)
 	{
 		FATEntryResetCount();
 		FATEntry32(MEDIA_TYPE, 0xFF, 0xFF, 0xFF);
 		FATEntry32NoAnd(0xFF, 0xFF, 0xFF, 0x0F | HRD_ERR_BYTE | CLN_SHUT_BYTE);
 
 		uint32_t cluster = FATEntryGetCount();
-		size_t bytesPerCluster = this->bootSector->bytesPerSector * this->bootSector->sectorsPerCluster;
-		_FATEntry_write32(this->tree->root, &cluster, bytesPerCluster);
+		size_t bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
+		_FATEntry_write32(this->tree.root, &cluster, bytesPerCluster);
 
 		size_t bytesWritten = FATEntryGetCount() * 4;
-		size_t bytesLeft = this->bootSector->biosParamBlock.fat32.fatSize32 * this->bootSector->bytesPerSector - bytesWritten;
+		size_t bytesLeft = this->bootSector.biosParamBlock.fat32.fatSize32 * this->bootSector.bytesPerSector - bytesWritten;
 
-		image->writeImgFileZeros(bytesLeft);
+		image.writeImgFileZeros(bytesLeft);
 	}
 }
 
-FATTable::FATTable(FileTree *tree, FATBootSector *bootSector, const std::string &fatType)
-{
-	this->tree = tree;
-	this->fatType = fatType;
-	this->bootSector = bootSector;
+FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, FatType fatType):
+	tree(tree), fatType(fatType), bootSector(bootSector) {
+
 }
 
-void FATTable::write(FATDiskImage *image) const
+void FATTable::write_to(FATDiskImage &image) const
 {
-
-	if (this->fatType == "32")
-		this->write32(image);
-	else if (this->fatType == "16")
-		this->write16(image);
-	else if (this->fatType == "12")
-		this->write12(image);
-	else
-	{
-		fprintf(stderr, "Invalid fat type '%s', must be 12,16,32\n", this->fatType.c_str());
-		exit(1);
+	switch (this->fatType) {
+		case FatType::FAT12: write12(image); break;
+		case FatType::FAT16: write16(image); break;
+		case FatType::FAT32: write32(image); break;
 	}
 }
