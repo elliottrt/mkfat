@@ -43,3 +43,6 @@ mkfat
 
 # CMake outputs
 build/
+
+# IDE outputs
+.vscode/

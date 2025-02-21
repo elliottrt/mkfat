@@ -173,27 +173,28 @@ FATReserved::FATReserved(const std::string &bootSectorPath,
 
 }
 
-void FATReserved::write(FATDiskImage *image) const
+void FATReserved::write(FATDiskImage &image) const
 {
 
 	ssize_t bytesLeft = this->reservedSectors * DISK_SECTOR_SIZE;
 
-	image->writeImgFile(&this->bootSector, DISK_SECTOR_SIZE);
+	image.writeImgFile(&this->bootSector, DISK_SECTOR_SIZE);
 	bytesLeft -= DISK_SECTOR_SIZE;
 
 	if (this->fatType == "32")
 	{
-		image->writeImgFile(&this->fsinfo, DISK_SECTOR_SIZE);
-		image->writeImgFileZeros(DISK_SECTOR_SIZE * (BACKUP_BOOT_SECTOR - 2));
+		// TODO: could fsinfo and bootsector be FATWriteable?
+		image.writeImgFile(&this->fsinfo, DISK_SECTOR_SIZE);
+		image.writeImgFileZeros(DISK_SECTOR_SIZE * (BACKUP_BOOT_SECTOR - 2));
 		// backup bootsector and fsinfo
-		image->writeImgFile(&this->bootSector, DISK_SECTOR_SIZE);
-		image->writeImgFile(&this->fsinfo, DISK_SECTOR_SIZE);
+		image.writeImgFile(&this->bootSector, DISK_SECTOR_SIZE);
+		image.writeImgFile(&this->fsinfo, DISK_SECTOR_SIZE);
 		bytesLeft -= DISK_SECTOR_SIZE * 7;
 	}
 
 	if (this->reservedData)
 	{
-		image->writeImgFile(this->reservedData, this->reservedDataSize);
+		image.writeImgFile(this->reservedData, this->reservedDataSize);
 		bytesLeft -= this->reservedDataSize;
 	}
 
@@ -203,6 +204,6 @@ void FATReserved::write(FATDiskImage *image) const
 		exit(1);
 	}
 
-	image->writeImgFileZeros(bytesLeft);
+	image.writeImgFileZeros(bytesLeft);
 
 }

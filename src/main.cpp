@@ -10,7 +10,7 @@
 void usage(void)
 {
 	printf("Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel]\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 char *findArgument(int argc, char **argv, const char *argName)
@@ -51,23 +51,25 @@ int main(int argc, char **argv)
 
 	if (fatType != "12" && fatType != "16" && fatType != "32")
 	{
+		// TODO: standardize errors -> make header for error messages
 		fprintf(stderr, "error: invalid fat type '%s', must be one of: 12, 16, 32\n", fatType.c_str());
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	FATReserved fres = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
-	FATDiskImage fdi = FATDiskImage(outputPath, fres.bootSector.bytesPerSector);
+	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
+	FATDiskImage fatDiskImage = FATDiskImage(outputPath, fatReserved.bootSector.bytesPerSector);
 
-	FileTree ft = FileTree(rootDirectory, volumeLabel);
-	ft.collect();
+	FileTree fileTree = FileTree(rootDirectory, volumeLabel);
+	fileTree.collect();
 
-	FATTable fatTable = FATTable(&ft, &fres.bootSector, fatType);
-	FATData fatData = FATData(&ft, &fres.bootSector, fatType);
+	FATTable fatTable = FATTable(fileTree, fatReserved.bootSector, fatType);
+	FATData fatData = FATData(fileTree, fatReserved.bootSector, fatType);
 
-	fdi.createImgFile();
-	fdi.writeImgFile(&fres);
-	fdi.writeImgFile(&fatTable);
-	fdi.writeImgFile(&fatData);
-	fdi.closeImgFile();
+	fatDiskImage.createImgFile();
+	fatReserved.write(fatDiskImage);
+	fatTable.write(fatDiskImage);
+	fatData.write(fatDiskImage);
+	fatDiskImage.closeImgFile();
 
+	return EXIT_SUCCESS;
 }

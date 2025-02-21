@@ -24,7 +24,7 @@ public:
 					   const std::string &fatType,
 					   const std::string &volumeLabel);
 
-	void write(FATDiskImage *image) const;
+	void write(FATDiskImage &image) const override;
 
 };
 

@@ -207,9 +207,12 @@ enum FATEntryType FATEntryType12(uint16_t value)
 	return RESERVEDCLUSTER;
 }
 
-void FATEntryDiskImage(FATDiskImage *image)
+// we use a reference to ensure that FATEntryDiskImage will
+// be called with a valid pointer, but we still want an empty
+// start up state
+void FATEntryDiskImage(FATDiskImage &image)
 {
-	_diskImage = image;
+	_diskImage = &image;
 }
 
 size_t FATEntryGetCount()

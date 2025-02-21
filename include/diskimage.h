@@ -20,7 +20,6 @@ public:
 	void closeImgFile(void);
 
 	void writeImgFile(const void *data, size_t count);
-	void writeImgFile(const FATWriteable *fatData);
 
 	void writeImgFileZeros(size_t count);
 

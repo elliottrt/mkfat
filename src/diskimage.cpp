@@ -54,13 +54,6 @@ void FATDiskImage::writeImgFile(const void *data, size_t count)
 	}
 }
 
-
-void FATDiskImage::writeImgFile(const FATWriteable *fatData)
-{
-	fatData->write(this);
-}
-
-
 // TODO: optimize this
 void FATDiskImage::writeImgFileZeros(size_t count)
 {

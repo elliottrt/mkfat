@@ -3,7 +3,7 @@
 
 #include <sys/stat.h>
 
-TreeItem::TreeItem(TreeItem *parent, const std::filesystem::directory_entry &entry)
+TreeItem::TreeItem(const TreeItem *parent, const std::filesystem::directory_entry &entry): parent(parent)
 {
 	if (!entry.is_regular_file() && !entry.is_directory())
 	{
@@ -11,16 +11,15 @@ TreeItem::TreeItem(TreeItem *parent, const std::filesystem::directory_entry &ent
 		exit(1);
 	}
 
-	this->parent = parent;
 	this->artificial = false;
 
 	if (entry.is_directory())
 		this->direntry.attributes |= DIRECTORY;
 
-	this->name = this->directory() ? entry.path().stem() : entry.path().filename();
+	this->name = this->is_directory() ? entry.path().stem() : entry.path().filename();
 	this->direntry.setFileName(this->name.c_str());
 
-	this->direntry.fileSize = this->directory() ? 0 : entry.file_size();
+	this->direntry.fileSize = this->is_directory() ? 0 : entry.file_size();
 
 	struct stat sbuf;
 	struct tm access, modify;
@@ -53,9 +52,8 @@ TreeItem::TreeItem(TreeItem *parent, const std::filesystem::directory_entry &ent
 	this->direntry.creationDate = 0;
 }
 
-TreeItem::TreeItem(TreeItem *parent, const std::string &name, bool isDirectory)
+TreeItem::TreeItem(const TreeItem *parent, const std::string &name, bool isDirectory): parent(parent)
 {
-	this->parent = parent;
 	this->name = name;
 	this->direntry.setFileName(name.c_str());
 	this->artificial = true;
@@ -103,7 +101,7 @@ void TreeItem::findChildren(const std::filesystem::directory_entry &entry)
 		if (childEntry.path().filename() == ".DS_Store") continue;
 
 		TreeItem *child = new TreeItem(this, childEntry);
-		if (child->directory()) 
+		if (child->is_directory()) 
 		{
 			child->createDots();
 			child->findChildren(childEntry);
@@ -115,7 +113,7 @@ void TreeItem::findChildren(const std::filesystem::directory_entry &entry)
 std::string TreeItem::path(void) const
 {
 	std::string _path = this->name;
-	TreeItem *ancestor = this->parent;
+	const TreeItem *ancestor = this->parent;
 	while (ancestor != NULL)
 	{
 		_path.insert(0, ancestor->name + "/");
@@ -124,7 +122,7 @@ std::string TreeItem::path(void) const
 	return _path;
 }
 
-bool TreeItem::directory(void) const
+bool TreeItem::is_directory(void) const
 {
 	return (this->direntry.attributes & DIRECTORY) != 0;
 }
