@@ -7,7 +7,10 @@
 #include <string.h>
 
 #define DISK_SECTOR_SIZE 512
-// TODO: some of these things should be customizable
+// FAT_COUNT should NEVER be customizable -
+// "many software programs and a few operating systems’
+// FAT file system drivers may not function properly 
+// if the value is something other than 2" - fatgen103.pages
 #define FAT_COUNT 2
 #define DRIVE_NUM 0x80
 #define BOOT_SIGNATURE 0x29
