@@ -40,3 +40,6 @@ test-root/
 root/
 *.img
 mkfat
+
+# CMake outputs
+build/

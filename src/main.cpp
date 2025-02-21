@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
 	if (fatType != "12" && fatType != "16" && fatType != "32")
 	{
-		fprintf(stderr, "Invalid fat type '%s', must be 12, 16, or 32.\n", fatType.c_str());
+		fprintf(stderr, "error: invalid fat type '%s', must be one of: 12, 16, 32\n", fatType.c_str());
 		exit(1);
 	}
 
