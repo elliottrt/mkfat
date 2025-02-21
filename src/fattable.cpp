@@ -8,6 +8,8 @@
 #define CLN_SHUT_BYTE 0x80
 #define HRD_ERR_BYTE 0x40
 
+// TODO: instead of writing each entry individually, and then repeating for each fat, we should write once to a buffer in memory then write that buffer the required number of times
+
 // TODO: make rootEntryClusters a boolean to of whether the current dir is the root
 void _FATEntry_write12(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters)
 {

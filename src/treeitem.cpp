@@ -109,8 +109,12 @@ void TreeItem::findChildren(const std::filesystem::directory_entry &entry)
 {
 	for (const auto &childEntry : std::filesystem::directory_iterator(entry.path())) 
 	{
-		// TODO: find some way to do this without manually checking filename - note that filenames starting with . aren't valid fat filenames, could be skipped?
-		if (childEntry.path().filename() == ".DS_Store") continue;
+		// we want to skip hidden files, which begin with a .
+		std::string filename = childEntry.path().filename().string();
+		if (filename.size() == 0 || filename.at(0) == '.') {
+			mkfatWarn("skipping hidden file '%s'\n", childEntry.path().c_str());
+			continue;
+		}
 
 		TreeItem *child = new TreeItem(this, childEntry);
 		if (child->is_directory()) 

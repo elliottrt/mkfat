@@ -3,13 +3,11 @@
 #include "fatformat.h"
 #include "fattype.h"
 
-#include <cstdio>
-
 struct spctable
 {
 	uint32_t diskSize;
 	uint8_t sectorsPerCluster;
-} 
+}
 FAT32_SPC_TABLE[] =
 {
 	{ 66600, 0 },
@@ -19,7 +17,7 @@ FAT32_SPC_TABLE[] =
 	{ 67108864, 32 },
 	{ 0xFFFFFFFF, 64 }
 }, 
-FAT16_SPC_TABLE[] = 
+FAT16_SPC_TABLE[] =
 {
 	{ 8400,   0},
     { 32680,   2},
@@ -80,7 +78,7 @@ void FATBootSector::defaultBootSector12(const std::string &volumeLabel)
 	this->bootSectorCommon();
 	this->jmp[1] = 0x3C;
 	this->reservedSectors = 1;
-	this->totalSectors16 = DISK_SIZE_12 & 0xFFFF;
+	this->totalSectors16 = DISK_SIZE_12;
 	this->totalSectors32 = 0;
 	this->sectorsPerCluster = 2;
 	this->biosParamBlock.fat1216.driveNumber = DRIVE_NUM;
@@ -168,7 +166,7 @@ void FATBootSector::defaultBootSector16(const std::string &volumeLabel)
 	strncpy(this->biosParamBlock.fat1216.volumeLabel, volumeLabel.c_str(), 11);
 	strncpy(this->biosParamBlock.fat1216.fileSystemType, "FAT16   ", 8);
 	memcpy(this->biosParamBlock.fat1216.bootCode, defaultBootCode, sizeof(defaultBootCode));
-	this->sectorsPerCluster = getSectorsPerCluster(FAT16_SPC_TABLE, sizeof(FAT16_SPC_TABLE), DISK_SIZE_16);
+	this->sectorsPerCluster = getSectorsPerCluster(FAT16_SPC_TABLE, sizeof(FAT16_SPC_TABLE), this->totalSectors16);
 }
 
 void FATBootSector::defaultBootSector32(const std::string &volumeLabel)
@@ -186,11 +184,10 @@ void FATBootSector::defaultBootSector32(const std::string &volumeLabel)
 	this->biosParamBlock.fat32.backupBootSector = BACKUP_BOOT_SECTOR;
 	this->biosParamBlock.fat32.driveNumber = DRIVE_NUM;
 	this->biosParamBlock.fat32.bootSignature = BOOT_SIGNATURE;
-	//strncpy(this->biosParamBlock.fat32.volumeLabel, volumeLabel.c_str(), 11);
 	formatFATName(volumeLabel.c_str(), this->biosParamBlock.fat32.volumeLabel, 11);
 	strncpy(this->biosParamBlock.fat32.fileSystemType, "FAT32   ", 8);
 	memcpy(this->biosParamBlock.fat32.bootCode, defaultBootCode, sizeof(defaultBootCode));
-	this->sectorsPerCluster = getSectorsPerCluster(FAT32_SPC_TABLE, sizeof(FAT32_SPC_TABLE), DISK_SIZE_32);
+	this->sectorsPerCluster = getSectorsPerCluster(FAT32_SPC_TABLE, sizeof(FAT32_SPC_TABLE), this->totalSectors32);
 }
 
 void FATBootSector::bootSectorCommon(void)
@@ -217,12 +214,9 @@ FATBootSector::FATBootSector(const std::string &bootPath, const std::string &vol
 
 	if (bootPath != "")
 		fileRead(bootPath.c_str(), this, DISK_SECTOR_SIZE);
-
-	else if (fatType == FatType::FAT32)
-		this->defaultBootSector32(volumeLabel);
-	else if (fatType == FatType::FAT16)
-		this->defaultBootSector16(volumeLabel);
-	else
-		this->defaultBootSector12(volumeLabel);
-
+	else switch (fatType) {
+		case FatType::FAT32: defaultBootSector32(volumeLabel); break;
+		case FatType::FAT16: defaultBootSector16(volumeLabel); break;
+		case FatType::FAT12: defaultBootSector12(volumeLabel); break;
+	}
 }

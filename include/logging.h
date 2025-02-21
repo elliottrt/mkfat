@@ -6,6 +6,8 @@ void mkfatSetVerbose(bool verbose);
 
 void mkfatVerbose(const char *format, ...);
 
+void mkfatWarn(const char *format, ...);
+
 void mkfatError [[noreturn]] (int exitCode, const char *format, ...);
 
 #endif

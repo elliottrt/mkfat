@@ -33,8 +33,6 @@ void FATReserved::init12(void)
 		mkfatError(1, "amount of reserved sectors (%zu) exceeds disk space (%zu)\n", this->reservedSectors, DISK_SIZE_16);
 	}
 
-	this->bootSector.totalSectors16 = DISK_SIZE_12;
-
 	uint32_t rootDirectorySectors = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + (this->bootSector.bytesPerSector - 1)) / this->bootSector.bytesPerSector;
 
 	uint32_t dataSectorCount = this->bootSector.totalSectors16 - 
@@ -49,13 +47,13 @@ void FATReserved::init12(void)
 
 	uint32_t clusterCount = dataSectorCount / this->bootSector.sectorsPerCluster;
 
-	if (clusterCount >= 4085)
+	if (clusterCount >= FAT1632_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too large (%u), drive should be FAT16\n", clusterCount);
+		mkfatError(1, "cluster count too large (%u >= %u), drive should be FAT32\n", clusterCount, FAT1632_BOUNDARY);
 	}
-	else if (clusterCount >= 65525)
+	else if (clusterCount >= FAT1216_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too large (%u), drive should be FAT32\n", clusterCount);
+		mkfatError(1, "cluster count too large (%u >= %u), drive should be FAT16\n", clusterCount, FAT1216_BOUNDARY);
 	}
 }
 
@@ -67,8 +65,6 @@ void FATReserved::init16(void)
 	{
 		mkfatError(1, "amount of reserved sectors (%lu) exceeds disk space (%zu)\n", this->reservedSectors, DISK_SIZE_16);
 	}
-
-	this->bootSector.totalSectors16 = DISK_SIZE_16;
 
 	uint32_t rootDirectorySectors = ((this->bootSector.rootEntryCount * sizeof(struct direntry)) + (this->bootSector.bytesPerSector - 1)) / this->bootSector.bytesPerSector;
 	uint32_t tmp1 = DISK_SIZE_16 - (this->reservedSectors + rootDirectorySectors);
@@ -89,13 +85,13 @@ void FATReserved::init16(void)
 	uint32_t clusterCount = dataSectorCount / this->bootSector.sectorsPerCluster;
 
 
-	if (clusterCount < 4085)
+	if (clusterCount < FAT1216_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too small (%u), drive should be FAT12\n", clusterCount);
+		mkfatError(1, "cluster count too small (%u < %u), drive should be FAT12\n", clusterCount, FAT1216_BOUNDARY);
 	}
-	else if (clusterCount >= 65525)
+	else if (clusterCount >= FAT1632_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too large (%u), drive should be FAT32\n", clusterCount);
+		mkfatError(1, "cluster count too large (%u >= %u), drive should be FAT32\n", clusterCount, FAT1632_BOUNDARY);
 	}
 }
 
@@ -107,8 +103,6 @@ void FATReserved::init32(void)
 	{
 		mkfatError(1, "Amount of reserved sectors (%lu) exceeds disk space (%i)\n", this->reservedSectors, DISK_SIZE_32);
 	}
-
-	this->bootSector.totalSectors32 = DISK_SIZE_32;
 
 	uint32_t tmp1 = DISK_SIZE_32 - this->reservedSectors;
 	uint32_t tmp2 = (256 * this->bootSector.sectorsPerCluster) + this->bootSector.fatCount;
@@ -126,13 +120,13 @@ void FATReserved::init32(void)
 
 	uint32_t clusterCount = dataSectorCount / this->bootSector.sectorsPerCluster;
 
-	if (clusterCount < 4085)
+	if (clusterCount < FAT1216_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too small (%u), drive should be FAT12\n", clusterCount);
+		mkfatError(1, "cluster count too small (%u < %u), drive should be FAT12\n", clusterCount, FAT1216_BOUNDARY);
 	}
-	else if (clusterCount < 65525)
+	else if (clusterCount < FAT1632_BOUNDARY)
 	{
-		mkfatError(1, "cluster count too small (%u), drive should be FAT16\n", clusterCount);
+		mkfatError(1, "cluster count too small (%u < %u), drive should be FAT16\n", clusterCount, FAT1632_BOUNDARY);
 	}
 }
 

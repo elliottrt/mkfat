@@ -28,6 +28,12 @@
 #define DISK_SIZE_12 2880
 #define TOTAL_SECTORS_12 DISK_SIZE_12
 
+// if cluster count < FAT1216_BOUNDARY, drive is FAT12
+// if cluster count >= FAT1216_BOUNDARY and < FAT1632_BOUNDARY, drive is FAT16
+// if cluster count >= FAT1632_BOUNDARY, the drive is FAT32
+#define FAT1216_BOUNDARY 4085
+#define FAT1632_BOUNDARY 65525
+
 #define min(a, b) ((a) > (b) ? (b) : (a))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 

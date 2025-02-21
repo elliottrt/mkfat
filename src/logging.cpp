@@ -19,6 +19,14 @@ void mkfatVerbose(const char *format, ...) {
 	va_end(ap);
 }
 
+void mkfatWarn(const char *format, ...) {
+	va_list ap;
+	va_start(ap, format);
+	fprintf(stderr, "mkfat: warning: ");
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+}
+
 void mkfatError(int exitCode, const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);

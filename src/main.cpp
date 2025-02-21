@@ -40,8 +40,7 @@ const char *findArgVal(int argc, const char **argv, const char *argName)
 			else if (arg + 1 < argc)
 				return argv[arg + 1];
 			else
-				// empty argument
-				return NULL;
+				mkfatError(1, "argument '%s' has no value\n", argName);
 		}
 	}
 	return NULL;
