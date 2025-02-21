@@ -86,12 +86,11 @@ int main(int argc, const char **argv)
 
 	// initialize FAT data structures
 
-	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
-	FATDiskImage fatDiskImage = FATDiskImage(outputPath, fatReserved.bootSector.bytesPerSector);
-
 	FileTree fileTree = FileTree(rootDirectory, volumeLabel);
 	fileTree.collect();
 
+	FATReserved fatReserved = FATReserved(fatBootSectorPath, reservedPath, fatType, volumeLabel);
+	FATDiskImage fatDiskImage = FATDiskImage(outputPath, fatReserved.bootSector.bytesPerSector);
 	FATTable fatTable = FATTable(fileTree, fatReserved.bootSector, fatType);
 	FATData fatData = FATData(fileTree, fatReserved.bootSector, fatType);
 

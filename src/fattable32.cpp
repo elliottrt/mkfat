@@ -8,21 +8,21 @@
 #define CLN_SHUT_BYTE 0x80
 #define HRD_ERR_BYTE 0x40
 
-void FATTable::generateFAT32_recursive(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster)
+void FATTable::generateFAT32_recursive(TreeItem *item, size_t bytesPerCluster)
 {
 	size_t itemSize = item->size();
 
 	// See https://stackoverflow.com/questions/2422712/rounding-integer-division-instead-of-truncating
-	ssize_t entryCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
-	entryCount--; // remove EOC, we'll do that manually
+	ssize_t clusterCount = (itemSize + (bytesPerCluster - 1)) / bytesPerCluster;
+	clusterCount--; // remove EOC, we'll do that manually
 
 	mkfatVerbose("Writing fatentry '%.8s' '%.3s', size: %zd\n", item->direntry.fileName, item->direntry.fileExtension, entryCount + 1);
 
 	if (itemSize == 0) 
 		return;
 
-	item->direntry.firstClusterLo = *cluster & 0xFFFF;
-	item->direntry.firstClusterHi = *cluster >> 16;
+	item->direntry.firstClusterLo = entryCount & 0xFFFF;
+	item->direntry.firstClusterHi = entryCount >> 16;
 
 	if (item->dot && item->dotdot && item->parent)
 	{
@@ -38,20 +38,18 @@ void FATTable::generateFAT32_recursive(TreeItem *item, uint32_t *cluster, size_t
 		item->dotdot->direntry.firstClusterHi = 0;
 	}
 
-	while (entryCount--)
+	while (clusterCount--)
 	{
-		FATEntry32(*cluster + 1);
-		*cluster = *cluster + 1;
+		FATEntry32(entryCount + 1);
 	}
 
 	FATEntry32(ENDCLUSTER32);
-	*cluster = *cluster + 1;
 
 	
 	if (item->is_directory())
 	{
 		for (TreeItem *child : item->children)
-			generateFAT32_recursive(child, cluster, bytesPerCluster);
+			generateFAT32_recursive(child, bytesPerCluster);
 	}
 
 }
@@ -61,9 +59,8 @@ void FATTable::generateFAT32(void)
 	FATEntry32(MEDIA_TYPE, 0xFF, 0xFF, 0xFF);
 	FATEntry32NoAnd(0xFF, 0xFF, 0xFF, 0x0F | HRD_ERR_BYTE | CLN_SHUT_BYTE);
 
-	uint32_t cluster = entryCount;
 	size_t bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
-	generateFAT32_recursive(this->tree.root, &cluster, bytesPerCluster);
+	generateFAT32_recursive(this->tree.root, bytesPerCluster);
 }
 
 void FATTable::FATEntry32(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)

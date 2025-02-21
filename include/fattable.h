@@ -25,17 +25,14 @@ class FATTable
 	// write n bytes from data into fatTable
 	void tableWrite(const void *data, size_t n);
 
-	void write12(FATDiskImage &image) const;
 	void generateFAT12(void);
-	void generateFAT12_recursive(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters);
+	void generateFAT12_recursive(TreeItem *item, size_t bytesPerCluster, bool isRoot);
 
-	void write16(FATDiskImage &image) const;
 	void generateFAT16(void);
-	void generateFAT16_recursive(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster, uint16_t rootEntryClusters);
+	void generateFAT16_recursive(TreeItem *item, size_t bytesPerCluster, bool isRoot);
 
-	void write32(FATDiskImage &image) const;
 	void generateFAT32(void);
-	void generateFAT32_recursive(TreeItem *item, uint32_t *cluster, size_t bytesPerCluster);
+	void generateFAT32_recursive(TreeItem *item, size_t bytesPerCluster);
 
 	// write FAT32 entry into FAT
 	void FATEntry32(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3);

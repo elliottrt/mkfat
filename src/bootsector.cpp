@@ -3,6 +3,7 @@
 #include "fatformat.h"
 #include "fattype.h"
 
+// this is found on pages 22-23 of fatgen103.pages
 struct spctable
 {
 	uint32_t diskSize;

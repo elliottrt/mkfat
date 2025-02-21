@@ -11,6 +11,7 @@ struct FATFSInfo
 	uint8_t zeroed[480] = {0};
 	uint32_t structSignature = 0x61417272;
 	// TODO: set freeClusters and nextCluster
+	// note: nextCluster = entryCount after FATTable has been generated
 	uint32_t freeClusters = 0xFFFFFFFF;
 	uint32_t nextCluster = 0xFFFFFFFF;
 	uint8_t zeroed1[12] = {0};
