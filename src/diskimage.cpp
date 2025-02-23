@@ -1,5 +1,4 @@
 #include "diskimage.h"
-#include "common.h"
 #include "logging.h"
 
 #include <cstdio>
@@ -52,7 +51,12 @@ void FATDiskImage::writeImgFileZeros(size_t count)
 {
 	uint8_t zero[1024] = {0};
 	for (ssize_t remaining = count; remaining > 0; remaining -= 1024)
-		this->writeImgFile(zero, min(remaining, 1024));
+	{
+		this->writeImgFile(
+		zero, 
+		std::min(remaining, ssize_t(1024))
+		);
+	}
 }
 
 size_t FATDiskImage::sizeImgFile(void)

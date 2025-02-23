@@ -5,7 +5,13 @@
 #include <cstdlib>
 #include <cstring>
 
-void FATTable::tableWrite(const void *data, size_t n) {
+void FATTable::tableWrite(const void *data, size_t n)
+{
+	if (fatTableBytesUsed + n > fatSizeBytes())
+	{
+		mkfatError(1, "fat (of %zu entries) not large enough\n", fatSizeEntries());
+	}
+
 	memcpy(
 		(uint8_t *) fatTable + fatTableBytesUsed,
 		data,
@@ -34,7 +40,8 @@ FATTable::FATTable(const FileTree &tree, const FATBootSector &bootSector, FatTyp
 	}
 }
 
-FATTable::~FATTable(void) {
+FATTable::~FATTable(void)
+{
 	free(fatTable);
 }
 
@@ -51,6 +58,15 @@ size_t FATTable::fatSize(void) const {
 
 size_t FATTable::fatSizeBytes(void) const {
 	return fatSize() * bootSector.bytesPerSector;
+}
+
+size_t FATTable::fatSizeEntries(void) const {
+	switch (fatType)
+	{
+		case FatType::FAT12: return (fatSizeBytes() * 3) / 2;
+		case FatType::FAT16: return fatSizeBytes() / 2;
+		case FatType::FAT32: return fatSizeBytes() / 4;
+	}
 }
 
 void FATTable::write_to(FATDiskImage &image) const

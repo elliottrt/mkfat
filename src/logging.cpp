@@ -6,11 +6,13 @@
 
 bool _verbose = false;
 
-void mkfatSetVerbose(bool verbose) {
+void mkfatSetVerbose(bool verbose)
+{
 	_verbose = verbose;
 }
 
-void mkfatVerbose(const char *format, ...) {
+void mkfatVerbose(const char *format, ...)
+{
 	if (!_verbose) return;
 
 	va_list ap;
@@ -19,7 +21,8 @@ void mkfatVerbose(const char *format, ...) {
 	va_end(ap);
 }
 
-void mkfatWarn(const char *format, ...) {
+void mkfatWarn(const char *format, ...)
+{
 	va_list ap;
 	va_start(ap, format);
 	fprintf(stderr, "mkfat: warning: ");
@@ -27,7 +30,8 @@ void mkfatWarn(const char *format, ...) {
 	va_end(ap);
 }
 
-void mkfatError(int exitCode, const char *format, ...) {
+void mkfatError(int exitCode, const char *format, ...)
+{
 	va_list ap;
 	va_start(ap, format);
 	fprintf(stderr, "mkfat: error: ");

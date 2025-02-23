@@ -2,7 +2,9 @@
 #include "fatformat.h"
 #include "logging.h"
 
+#include <algorithm>
 #include <cerrno>
+#include <cstdio>
 
 direntry::direntry(void)
 {
@@ -11,40 +13,51 @@ direntry::direntry(void)
 	memset(this->fileExtension, ' ', DIRENTRY_EXTLEN);
 }
 
-void direntry::setFileName(const char *name)
+void direntry::setFileName(const std::string &name)
 {
 
 	// if this is a dot or dotdot entry handle it
-	if (strcmp(name, ".") == 0)
+	if (name == ".")
 	{
-		memcpy(this->fileName, name, 1);
-		return;
+		this->fileName[0] = '.';
 	}
-	else if (strcmp(name, "..") == 0)
+	else if (name == "..")
 	{
-		memcpy(this->fileName, name, 2);
-		return;
-	}
-
-	// try to find a . that begins the extension
-	const char *dotLocation = strchr(name, '.');
-	size_t nameLength = strlen(name);
-
-	if (dotLocation)
-	{
-		// if there's a second . then this filename is bad and we don't want to deal with it
-		if (strchr(dotLocation + 1, '.'))
-			mkfatError(1, "bad filename '%s': contains multiple .\n", name);
-
-		formatFATName(dotLocation + 1, this->fileExtension, DIRENTRY_EXTLEN);
-		nameLength -= strlen(dotLocation);
+		this->fileName[0] = '.';
+		this->fileName[1] = '.';
 	}
 	else
 	{
-		memset(this->fileExtension, ' ', DIRENTRY_EXTLEN);
-	}
+		// try to find a . that begins the extension
+		size_t dotLocation = name.find('.');
 
-	formatFATName(name, this->fileName, min(DIRENTRY_NAMELEN, nameLength));
+		// if the filename has an extension, format it
+		if (dotLocation != std::string::npos)
+		{
+			// if there's a second . then this filename is bad and we don't want to deal with it
+			if (name.find('.', dotLocation + 1) != std::string::npos)
+			{
+				mkfatError(1, "bad filename '%s': contains multiple .\n", name.c_str());
+			}
+
+			const std::string ext_substr = name.substr(dotLocation + 1);
+
+			formatFATName(
+				ext_substr.c_str(), 
+				this->fileExtension, 
+				std::min(size_t(DIRENTRY_EXTLEN), ext_substr.length())
+			);
+		}
+
+		// format the name of the file without the extension
+		const std::string name_substr = name.substr(0, dotLocation);
+
+		formatFATName(
+			name_substr.c_str(),
+			this->fileName,
+			std::min(size_t(DIRENTRY_NAMELEN), name_substr.length())
+		);
+	}
 }
 
 void fileRead(const char *filename, void *out, size_t size)

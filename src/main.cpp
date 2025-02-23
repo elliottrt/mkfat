@@ -46,13 +46,15 @@ const char *findArgVal(int argc, const char **argv, const char *argName)
 	return NULL;
 }
 
-const char *findArgValOrDefault(int argc, const char **argv, const char *argName, const char *def) {
+const char *findArgValOrDefault(int argc, const char **argv, const char *argName, const char *def)
+{
 	const char *findArgValResult = findArgVal(argc, argv, argName);
 
 	return findArgValResult ? findArgValResult : def;
 }
 
-FatType fatTypeOrFail(const char *str) {
+FatType fatTypeOrFail(const char *str)
+{
 	std::string fatTypeString = str;
 
 	if (fatTypeString == "32") return FatType::FAT32;
@@ -66,12 +68,16 @@ int main(int argc, const char **argv)
 	if (argc < 3)
 		usage();
 
+		// TODO: for fat12 and fat16, check that root dir region is large enough
+
 	// TODO: testing - can use 'hdiutil attach <fs.img>' to attach and 'hdiutil detach <disk thing>' to mount and unmount
 	// TODO: 'hdiutil imageinfo /dev/<whatever>' and 'diskutil'
 
 	// TODO: namespace
 
-	// TODO: after collecting FileTree, do a duplicate file check - two files in the same dir shouldn't have the same name
+	// TODO: error on unknown option
+
+	// TODO: long filename support?
 
 	// get command line arguments
 

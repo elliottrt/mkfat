@@ -5,7 +5,7 @@ project(mkfat VERSION 1.0.0
 		LANGUAGES CXX)
 
 # generate compile_commands.json for IDE integration
-add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=1)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB mkfat_source src/*.cpp)
 file(GLOB mkfat_include include/*.h)
@@ -17,4 +17,4 @@ target_compile_features(mkfat PUBLIC cxx_std_17)
 target_include_directories(mkfat PRIVATE include)
 
 # make sure all errors are known
-target_compile_options(mkfat PRIVATE "-Wall" "-Wextra" "-Wpedantic")
+target_compile_options(mkfat PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-g")

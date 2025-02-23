@@ -20,7 +20,7 @@ void FATReserved::loadReservedData(const std::string &reservedDataPath)
 	size_t systemSectors = this->fatType == FatType::FAT32 ? 8 : 1;
 
 	// if we need more reserved sectors, get them
-	this->reservedSectors = max(systemSectors + sectors, this->reservedSectors);
+	this->reservedSectors = std::max(systemSectors + sectors, this->reservedSectors);
 
 }
 

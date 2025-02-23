@@ -127,14 +127,15 @@ void FATData::write32(FATDiskImage &image) const
 }
 
 FATData::FATData(const FileTree &tree, const FATBootSector &bootSector, FatType fatType): 
-	tree(tree), bootSector(bootSector), fatType(fatType) {
-
+	tree(tree), bootSector(bootSector), fatType(fatType)
+{
 	this->bytesPerCluster = this->bootSector.bytesPerSector * this->bootSector.sectorsPerCluster;
 }
 
 void FATData::write_to(FATDiskImage &image) const
 {
-	switch (this->fatType) {
+	switch (this->fatType)
+	{
 		case FatType::FAT12: write12(image); break;
 		case FatType::FAT16: write16(image); break;
 		case FatType::FAT32: write32(image); break;

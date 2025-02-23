@@ -74,8 +74,10 @@ TreeItem::TreeItem(const TreeItem *parent, const std::string &name, bool isDirec
 	}
 }
 
-TreeItem::~TreeItem(void) {
-	for (TreeItem *item : children) {
+TreeItem::~TreeItem(void)
+{
+	for (TreeItem *item : children)
+	{
 		delete item;
 	}
 }
@@ -90,18 +92,12 @@ void TreeItem::createDots(void)
 	this->dot->direntry.lastAccessDate = this->direntry.lastAccessDate;
 	this->dot->direntry.writeDate = this->direntry.writeDate;
 	this->dot->direntry.writeTime = this->direntry.writeTime;
-	this->dot->direntry.creationTenths = 0;
-	this->dot->direntry.creation2Seconds = 0;
-	this->dot->direntry.creationDate = 0;
 	this->children.push_back(this->dot);
 
 	this->dotdot = new TreeItem(this, "..", true);
 	this->dotdot->direntry.lastAccessDate = this->direntry.lastAccessDate;
 	this->dotdot->direntry.writeDate = this->direntry.writeDate;
 	this->dotdot->direntry.writeTime = this->direntry.writeTime;
-	this->dotdot->direntry.creationTenths = 0;
-	this->dotdot->direntry.creation2Seconds = 0;
-	this->dotdot->direntry.creationDate = 0;
 	this->children.push_back(this->dotdot);
 
 }
@@ -112,7 +108,8 @@ void TreeItem::findChildren(void)
 	{
 		// we want to skip hidden files, which begin with a .
 		std::string filename = childEntry.path().filename().string();
-		if (filename.size() == 0 || filename.at(0) == '.') {
+		if (filename.size() == 0 || filename.at(0) == '.')
+		{
 			mkfatWarn("skipping hidden file '%s'\n", childEntry.path().c_str());
 			continue;
 		}

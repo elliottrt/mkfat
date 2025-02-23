@@ -215,7 +215,8 @@ FATBootSector::FATBootSector(const std::string &bootPath, const std::string &vol
 
 	if (bootPath != "")
 		fileRead(bootPath.c_str(), this, DISK_SECTOR_SIZE);
-	else switch (fatType) {
+	else switch (fatType)
+	{
 		case FatType::FAT32: defaultBootSector32(volumeLabel); break;
 		case FatType::FAT16: defaultBootSector16(volumeLabel); break;
 		case FatType::FAT12: defaultBootSector12(volumeLabel); break;

@@ -27,8 +27,10 @@ FileTree::FileTree(const std::string &volumeLabel): FileTree("", volumeLabel)
 
 }
 
-FileTree::~FileTree(void) {
-	if (root) {
+FileTree::~FileTree(void)
+{
+	if (root)
+	{
 		delete root;
 	}
 }

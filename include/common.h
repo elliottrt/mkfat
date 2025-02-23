@@ -1,10 +1,10 @@
 #ifndef _TOOLS_FAT_COMMON
 #define _TOOLS_FAT_COMMON
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #define DISK_SECTOR_SIZE 512
 // FAT_COUNT should NEVER be customizable -
@@ -37,9 +37,6 @@
 #define FAT1216_BOUNDARY 4085
 #define FAT1632_BOUNDARY 65525
 
-#define min(a, b) ((a) > (b) ? (b) : (a))
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
 enum dirattr
 {
 	READ_ONLY = 0x01,
@@ -70,7 +67,7 @@ struct direntry
 	uint32_t fileSize;
 
 	direntry(void);
-	void setFileName(const char *name);
+	void setFileName(const std::string &name);
 	
 } __attribute__ ((packed));
 

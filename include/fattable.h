@@ -62,6 +62,8 @@ public:
 	size_t fatSize(void) const;
 	// returns the size of the FAT in bytes
 	size_t fatSizeBytes(void) const;
+	// returns the size of the FAT in entries
+	size_t fatSizeEntries(void) const;
 
 	void write_to(FATDiskImage &image) const;
 

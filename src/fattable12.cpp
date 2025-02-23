@@ -37,7 +37,7 @@ void FATTable::generateFAT12_recursive(TreeItem *item, size_t bytesPerCluster, b
 
 		while (clusterCount--)
 		{
-			FATEntry12(entryCount);
+			FATEntry12(entryCount + 1);
 		}
 
 		FATEntry12(ENDCLUSTER12);
@@ -128,8 +128,7 @@ void FATTable::FATEntry12Flush(void)
 		};
 
 		tableWrite(bytes, 3);
-		// we don't increment entry count here because
-		// we aren't writing an entry
+		entryCount++;
 		entryWaiting = false;
 	}
 }
