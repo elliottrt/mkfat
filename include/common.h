@@ -9,7 +9,7 @@
 #define DISK_SECTOR_SIZE 512
 // FAT_COUNT should NEVER be customizable -
 // "many software programs and a few operating systems’
-// FAT file system drivers may not function properly 
+// FAT file system drivers may not function properly
 // if the value is something other than 2" - fatgen103.pages
 #define FAT_COUNT 2
 #define DRIVE_NUM 0x80
@@ -21,6 +21,7 @@
 #define MEDIA_TYPE 0xF8
 #define DIRENTRY_NAMELEN 8
 #define DIRENTRY_EXTLEN 3
+#define OEM_NAME "MSWIN4.1"
 
 // TODO: make these customizable
 // about 64 mb
@@ -47,7 +48,7 @@ enum dirattr
 	ARCHIVE = 0x20,
 	DEVICE = 0x40,
 	UNUSED = 0x80,
-	LFN = READ_ONLY | HIDDEN | SYSTEM | VOLUME_ID 
+	LFN = READ_ONLY | HIDDEN | SYSTEM | VOLUME_ID
 };
 
 struct direntry
@@ -68,7 +69,7 @@ struct direntry
 
 	direntry(void);
 	void setFileName(const std::string &name);
-	
+
 } __attribute__ ((packed));
 
 void fileRead(const char *filename, void *out, size_t size);

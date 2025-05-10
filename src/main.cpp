@@ -7,50 +7,24 @@
 #include "fattable.h"
 #include "fatdata.h"
 #include "logging.h"
+#include "args.h"
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 
 void usage(void)
 {
-	fprintf(stderr, "Usage:\n./mkfat <12,16,32> <outputfile> [-Srootdir] [-Bbootfile] [-Rreservedfile] [-Vvolumelabel] [-v|--verbose]\n");
-	exit(EXIT_FAILURE);
-}
-
-bool hasArg(int argc, const char **argv, const char *argName)
-{
-	for (int arg = 0; arg < argc; arg++)
-	{
-		if (strcmp(argName, argv[arg]) == 0)
-			return true;
-	}
-	return false;
-}
-
-const char *findArgVal(int argc, const char **argv, const char *argName)
-{
-	for (int arg = 0; arg < argc; arg++)
-	{
-		const char *result = strstr(argv[arg], argName);
-		if (result && result == argv[arg])
-		{
-			if (strlen(argv[arg]) != strlen(argName))
-				return argv[arg] + strlen(argName);
-			else if (arg + 1 < argc)
-				return argv[arg + 1];
-			else
-				mkfatError(1, "argument '%s' has no value\n", argName);
-		}
-	}
-	return NULL;
-}
-
-const char *findArgValOrDefault(int argc, const char **argv, const char *argName, const char *def)
-{
-	const char *findArgValResult = findArgVal(argc, argv, argName);
-
-	return findArgValResult ? findArgValResult : def;
+	puts("Usage:");
+	puts("  mkfat <12,16,32> <output> [-v] [-s ROOT] [-b BOOT] [-r RESERVED] [-l LABEL]");
+	puts("");
+	puts("options:");
+	puts("  -v/--verbose         display extra information");
+	puts("  -s ROOT              specify path to folder to use as root");
+	puts("  -b BOOT              specify path to file containing bootsector");
+	puts("  -r RESERVED          specify path to file with reserved section, FAT32 only");
+	puts("  -l LABEL             set volume label");
 }
 
 FatType fatTypeOrFail(const char *str)
@@ -65,32 +39,40 @@ FatType fatTypeOrFail(const char *str)
 
 int main(int argc, const char **argv)
 {
-	if (argc < 3)
-		usage();
 
-		// TODO: for fat12 and fat16, check that root dir region is large enough
-
+	// TODO: make output an option and set a default
+	// TODO: for fat12 and fat16, check that root dir region is large enough
 	// TODO: testing - can use 'hdiutil attach <fs.img>' to attach and 'hdiutil detach <disk thing>' to mount and unmount
 	// TODO: 'hdiutil imageinfo /dev/<whatever>' and 'diskutil'
-
+	// TODO: use file <image name> to test
 	// TODO: namespace
-
 	// TODO: error on unknown option
-
 	// TODO: long filename support?
 
 	// get command line arguments
 
-	FatType fatType = fatTypeOrFail(argv[1]);
-	std::string outputPath = std::string(argv[2]);
-
-	std::string rootDirectory = findArgValOrDefault(argc, argv, "-S", "");
-	std::string fatBootSectorPath = findArgValOrDefault(argc, argv, "-B", "");
-	std::string reservedPath = findArgValOrDefault(argc, argv, "-R", "");
-	std::string volumeLabel = findArgValOrDefault(argc, argv, "-V", VOLUMELABEL);
+	std::string rootDirectory = findArgValOrDefault(argc, argv, "-s", "");
+	std::string fatBootSectorPath = findArgValOrDefault(argc, argv, "-b", "");
+	std::string reservedPath = findArgValOrDefault(argc, argv, "-r", "");
+	std::string volumeLabel = findArgValOrDefault(argc, argv, "-l", VOLUMELABEL);
 	bool verbose = hasArg(argc, argv, "-v") || hasArg(argc, argv, "--verbose");
+	bool help = hasArg(argc, argv, "-h") || hasArg(argc, argv, "--help");
 
 	mkfatSetVerbose(verbose);
+
+	if (help)
+	{
+        usage();
+        return EXIT_SUCCESS;
+	}
+	else if (argc < 3)
+	{
+	    usage();
+		return EXIT_FAILURE;
+	}
+
+	FatType fatType = fatTypeOrFail(argv[1]);
+	std::string outputPath = std::string(argv[2]);
 
 	// initialize FAT data structures
 

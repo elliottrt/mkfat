@@ -17,7 +17,7 @@ FAT32_SPC_TABLE[] =
 	{ 33554432, 16 },
 	{ 67108864, 32 },
 	{ 0xFFFFFFFF, 64 }
-}, 
+},
 FAT16_SPC_TABLE[] =
 {
 	{ 8400,   0},
@@ -74,6 +74,8 @@ uint8_t getSectorsPerCluster(struct spctable *table, size_t tableSize, size_t di
 	return 0;
 }
 
+// TODO: for all of the strncpy, remove the magic number sizes
+
 void FATBootSector::defaultBootSector12(const std::string &volumeLabel)
 {
 	this->bootSectorCommon();
@@ -84,7 +86,7 @@ void FATBootSector::defaultBootSector12(const std::string &volumeLabel)
 	this->sectorsPerCluster = 2;
 	this->biosParamBlock.fat1216.driveNumber = DRIVE_NUM;
 	this->biosParamBlock.fat1216.bootSignature = BOOT_SIGNATURE;
-	strncpy(this->biosParamBlock.fat32.volumeLabel, volumeLabel.c_str(), 11);
+	strncpy(this->biosParamBlock.fat1216.volumeLabel, volumeLabel.c_str(), 11);
 	strncpy(this->biosParamBlock.fat1216.fileSystemType, "FAT12   ", 8);
 	memcpy(this->biosParamBlock.fat1216.bootCode, defaultBootCode, sizeof(defaultBootCode));
 
@@ -196,7 +198,7 @@ void FATBootSector::bootSectorCommon(void)
 	this->jmp[0] = 0xEB;
 	this->jmp[2] = 0x90;
 
-	strncpy(this->oemName, "MSWIN4.1", 8);
+	strncpy(this->oemName, OEM_NAME, sizeof(this->oemName));
 
 	this->bytesPerSector = DISK_SECTOR_SIZE;
 	this->fatCount = FAT_COUNT;
